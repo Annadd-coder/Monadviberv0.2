@@ -836,7 +836,7 @@ export default function AuthorPage() {
             className={styles.actionButton}
             onClick={shareOnTwitter}
           >
-            Share on Twitter
+            Share on X
           </motion.button>
 
           <motion.button
@@ -857,7 +857,7 @@ export default function AuthorPage() {
           className={styles.subscribeButton}
           onClick={() => window.open(data.social.twitter, "_blank")}
         >
-          Follow on Twitter
+          Follow on X
         </motion.button>
       </div>
 
