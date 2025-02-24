@@ -1,21 +1,21 @@
 {
   "name": "monadviber",
-  "version": "0.1.0",
-  "private": true,
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start",
-    "lint": "next lint"
+    "start": "next start"
   },
   "dependencies": {
+    "ethers": "^6.13.5",
+    "framer-motion": "^12.4.7",
+    "next": "^15.1.7",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "next": "15.1.6"
-  },
-  "devDependencies": {
-    "eslint": "^9",
-    "eslint-config-next": "15.1.6",
-    "@eslint/eslintrc": "^3"
+    "react-icons": "^5.5.0",
+    "react-tsparticles": "^2.12.2",
+    "tsparticles": "^3.8.1"
   }
 }

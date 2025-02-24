@@ -1,0 +1,144 @@
+.container {
+  background-color: #f9f5ff;
+  min-height: 100vh;
+  text-align: center;
+  padding: 60px 20px;
+  font-family: 'Helvetica Neue', Arial, sans-serif;
+  color: #4a148c;
+}
+
+.title {
+  font-size: 2rem;
+  margin-bottom: 20px;
+  font-weight: 700;
+}
+
+.about {
+  font-size: 1rem;
+  max-width: 600px;
+  margin: 0 auto 40px auto;
+  line-height: 1.5;
+  color: #5e2e94;
+}
+
+.supplyInfo {
+  font-size: 1.2rem;
+  margin-bottom: 20px;
+  font-weight: 500;
+  color: #4a148c;
+}
+
+.supplyInfo p {
+  margin: 0;
+}
+
+.soldOut {
+  color: #ff4d4d;
+  font-weight: bold;
+  margin-top: 10px;
+}
+
+.randomizer {
+  margin: 20px 0;
+}
+
+.artImage {
+  width: 250px;
+  border-radius: 10px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+  margin-bottom: 15px;
+}
+
+.phrase {
+  font-size: 1.4rem;
+  font-weight: 500;
+  margin: 15px 0;
+}
+
+.buttonGroup {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin-top: 15px;
+  flex-wrap: wrap;
+}
+
+.actionButton {
+  background-color: #8259f1;
+  border: none;
+  color: #fff;
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s ease;
+  opacity: 1;
+}
+
+.actionButton:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.subscribeSection {
+  margin-top: 30px;
+}
+
+.subscribeButton {
+  background: linear-gradient(90deg, #8259f1, #c49dff);
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  color: #fff;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.description {
+  margin-top: 30px;
+  font-style: italic;
+  max-width: 600px;
+  margin: 20px auto;
+}
+
+.mintStatusContainer {
+  margin: 20px 0;
+  padding: 15px;
+  border-radius: 8px;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.mintStatusPending {
+  background-color: #fff3cd;
+  color: #856404;
+  padding: 15px;
+  border-radius: 8px;
+  border: 1px solid #ffeeba;
+}
+
+.mintStatusSuccess {
+  background-color: #d4edda;
+  color: #5f3b6d;
+  padding: 15px;
+  border-radius: 8px;
+  border: 1px solid #c3e6cb;
+}
+
+.mintStatusError {
+  background-color: #f8d7da;
+  color: #721c24;
+  padding: 15px;
+  border-radius: 8px;
+  border: 1px solid #f5c6cb;
+}
+
+.mintStatusLink {
+  color: #8259f1;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.mintStatusLink:hover {
+  text-decoration: underline;
+}
