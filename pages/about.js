@@ -6,6 +6,7 @@ export default function MonadViberPage() {
     <>
       <Head>
         <title>MonadViber - Where Art Meets Utility</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       </Head>
 
       <main className="page-container">
@@ -102,7 +103,7 @@ export default function MonadViberPage() {
       </main>
 
       <style jsx>{`
-        /* Reset basic margins */
+        /* Сброс базовых отступов и коробочной модели */
         * {
           margin: 0;
           padding: 0;
@@ -115,14 +116,14 @@ export default function MonadViberPage() {
           color: #333;
         }
 
-        /* Container for all sections */
+        /* Контейнер для всего содержимого */
         .page-container {
           width: 100%;
           max-width: 1200px;
           margin: 0 auto;
         }
 
-        /* Hero Section (Intro) */
+        /* Hero (Intro) */
         .hero {
           display: flex;
           flex-wrap: wrap;
@@ -160,7 +161,7 @@ export default function MonadViberPage() {
           height: auto;
         }
 
-        /* Common styles for other sections */
+        /* Общий стиль для секций */
         .section {
           display: flex;
           flex-wrap: wrap;
@@ -198,12 +199,27 @@ export default function MonadViberPage() {
           height: auto;
         }
 
-        /* Alternative background for sections with class alt */
+        /* Альтернативный фон для некоторых блоков */
         .section.alt {
           background: #FBF9FF;
         }
 
-        /* Responsive adjustments */
+        /* --- Адаптивные стили --- */
+
+        /* При ширине до 992px немного уменьшим основные отступы и размеры */
+        @media (max-width: 992px) {
+          .hero, .section {
+            padding: 3rem 1rem;
+          }
+          .hero-content h1 {
+            font-size: 2.2rem;
+          }
+          .section-content h2 {
+            font-size: 1.8rem;
+          }
+        }
+
+        /* При ширине до 768px делаем колонки в одну строку и уменьшаем отступы ещё сильнее */
         @media (max-width: 768px) {
           .hero, .section {
             flex-direction: column;
@@ -215,6 +231,27 @@ export default function MonadViberPage() {
           }
           .hero-content h1 {
             font-size: 2rem;
+          }
+          .hero-content p,
+          .section-content p {
+            font-size: 1rem;
+          }
+        }
+
+        /* При ширине до 480px ещё сильнее уменьшаем заголовки и отступы */
+        @media (max-width: 480px) {
+          .hero, .section {
+            padding: 2rem 1rem;
+          }
+          .hero-content h1 {
+            font-size: 1.8rem;
+          }
+          .section-content h2 {
+            font-size: 1.5rem;
+          }
+          .hero-content p,
+          .section-content p {
+            font-size: 0.95rem;
           }
         }
       `}</style>

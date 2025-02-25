@@ -3,6 +3,7 @@ import Head from 'next/head';
 import dynamic from 'next/dynamic';
 import { loadFull } from 'tsparticles';
 
+// Загрузка react-tsparticles без серверного рендеринга
 const Particles = dynamic(() => import('react-tsparticles'), { ssr: false });
 
 export default function HomePage() {
@@ -16,9 +17,11 @@ export default function HomePage() {
     <>
       <Head>
         <title>MonadViber</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       </Head>
+
       <div className="page-container">
-        {/* Фоновый элемент для частиц */}
+        {/* Фон для частиц */}
         <div className="particles-background">
           <Particles
             id="tsparticles"
@@ -28,9 +31,17 @@ export default function HomePage() {
               fpsLimit: 60,
               particles: {
                 color: { value: "#A07BFF" },
-                links: { enable: true, color: "#A07BFF", distance: 150, opacity: 0.4 },
+                links: {
+                  enable: true,
+                  color: "#A07BFF",
+                  distance: 150,
+                  opacity: 0.4,
+                },
                 move: { enable: true, speed: 0.5 },
-                number: { density: { enable: true, area: 800 }, value: 30 },
+                number: {
+                  density: { enable: true, area: 800 },
+                  value: 30,
+                },
                 opacity: { value: 0.5 },
                 shape: { type: "circle" },
                 size: { value: { min: 1, max: 3 } },
@@ -40,9 +51,9 @@ export default function HomePage() {
           />
         </div>
 
-        {/* Основной контейнер ("облако") для всего контента */}
+        {/* Основной "облако"-контейнер для контента */}
         <div className="main-cloud">
-          {/* Welcome Section с анимированным градиентом */}
+          {/* Секция Welcome */}
           <div className="welcome-section">
             <h1 className="welcome-title">Welcome to MonadViber!</h1>
             <p className="welcome-subtitle">
@@ -50,9 +61,9 @@ export default function HomePage() {
             </p>
           </div>
 
-          {/* Карточки */}
+          {/* Секция с карточками */}
           <div className="cards-section">
-            {/* Коллекции – остаётся кликабельным */}
+            {/* Карточка 1: Коллекции */}
             <div className="card">
               <div className="card-content">
                 <img
@@ -65,10 +76,12 @@ export default function HomePage() {
                   Discover exclusive NFT collections from visionary artists curated for art enthusiasts.
                 </p>
               </div>
-              <a href="/collections" className="card-button">Browse Collections</a>
+              <a href="/collections" className="card-button">
+                Browse Collections
+              </a>
             </div>
 
-            {/* Auction – кнопка с текстом Soon, не кликабельна */}
+            {/* Карточка 2: Auction (неактивная) */}
             <div className="card">
               <div className="card-content">
                 <img
@@ -84,7 +97,7 @@ export default function HomePage() {
               <span className="card-button disabled">Soon</span>
             </div>
 
-            {/* MOAP – кнопка с текстом Soon, не кликабельна */}
+            {/* Карточка 3: MOAP (неактивная) */}
             <div className="card">
               <div className="card-content">
                 <img
@@ -103,25 +116,43 @@ export default function HomePage() {
         </div>
 
         <style jsx>{`
-          /* Общий фон страницы с анимированным градиентом */
+          /* Базовые стили */
+
+          :root {
+            /* Можно регулировать корневые размеры для удобства масштабирования */
+            font-size: 16px;
+          }
+
+          * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+          }
+
+          body {
+            font-family: 'Poppins', sans-serif;
+          }
+
+          /* Контейнер страницы с анимированным градиентом */
           .page-container {
             position: relative;
             min-height: 100vh;
             overflow: hidden;
-            font-family: 'Poppins', sans-serif;
-            background: linear-gradient(135deg, #EFE6FF, #D8C3FF);
-            background-size: 400% 400%;
-            animation: backgroundAnimation 15s ease infinite;
             display: flex;
             justify-content: center;
             align-items: center;
             padding: 20px;
+            background: linear-gradient(135deg, #EFE6FF, #D8C3FF);
+            background-size: 400% 400%;
+            animation: backgroundAnimation 15s ease infinite;
           }
+
           @keyframes backgroundAnimation {
             0% { background-position: 0% 50%; }
             50% { background-position: 100% 50%; }
             100% { background-position: 0% 50%; }
           }
+
           /* Фон для частиц */
           .particles-background {
             position: absolute;
@@ -131,20 +162,30 @@ export default function HomePage() {
             height: 100%;
             z-index: -1;
           }
-          /* Единый контейнер ("облако") */
+
+          /* Основной "облако"-контейнер для контента */
           .main-cloud {
             position: relative;
             z-index: 1;
+            width: 100%;
+            max-width: 1200px;
             background: #F4F0FF;
             border-radius: 40px;
             box-shadow: 0 10px 30px rgba(90, 61, 191, 0.3);
             padding: 40px;
-            max-width: 1200px;
-            width: 100%;
+            margin: auto;
           }
-          /* Welcome Section с анимированным градиентом */
+
+          /* Секция Welcome */
           .welcome-section {
-            background: linear-gradient(135deg, #F4F0FF, rgb(239, 230, 247), #E5DAFF, #DCCFFF, #F4F0FF);
+            background: linear-gradient(
+              135deg,
+              #F4F0FF,
+              rgb(239, 230, 247),
+              #E5DAFF,
+              #DCCFFF,
+              #F4F0FF
+            );
             background-size: 400% 400%;
             animation: welcomeGradient 15s ease infinite;
             border: 2px solid #D8C3FF;
@@ -155,30 +196,40 @@ export default function HomePage() {
             width: 90%;
             margin: 60px auto 40px;
           }
+
           @keyframes welcomeGradient {
             0% { background-position: 0% 50%; }
             50% { background-position: 100% 50%; }
             100% { background-position: 0% 50%; }
           }
+
           .welcome-title {
             font-size: 2.8rem;
             color: #5A3DBF;
-            margin: 0;
+            margin-bottom: 1rem;
           }
+
           .welcome-subtitle {
-            margin-top: 20px;
             font-size: 1.2rem;
             color: #333;
           }
-          /* Карточки */
+
+          /* Секция карточек */
           .cards-section {
             display: flex;
             flex-wrap: wrap;
             gap: 30px;
             justify-content: space-between;
+            margin-top: 2rem;
           }
+
           .card {
-            background: radial-gradient(circle, #ffffff, #f9f3ff 70%, #e8d0ff 100%);
+            background: radial-gradient(
+              circle,
+              #ffffff,
+              #f9f3ff 70%,
+              #e8d0ff 100%
+            );
             border-radius: 20px;
             box-shadow: 0 8px 20px rgba(90, 61, 191, 0.2);
             padding: 20px;
@@ -187,35 +238,42 @@ export default function HomePage() {
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            transition: transform 0.3s;
+            transition: transform 0.3s, box-shadow 0.3s;
+            margin: 0 auto; /* Чтобы карточки центрировались при одиночной колонке */
           }
+
           .card:hover {
             transform: translateY(-4px);
+            box-shadow: 0 8px 20px rgba(90, 61, 191, 0.3);
           }
+
           .card-content {
             flex-grow: 1;
-            min-height: 200px;
+            min-height: 180px;
+            text-align: center;
           }
+
           .card-icon {
-            width: 250px;
-            height: 250px;
-            margin-bottom: 10px;
+            width: 220px;
+            height: 220px;
+            margin-bottom: 1rem;
             display: block;
             margin-left: auto;
             margin-right: auto;
           }
+
           .card-title {
-            font-size: 1.8rem;
+            font-size: 1.6rem;
             color: #5A3DBF;
             margin-bottom: 10px;
-            text-align: center;
           }
+
           .card-text {
             font-size: 1rem;
             color: #333;
             margin-bottom: 20px;
-            text-align: center;
           }
+
           .card-button {
             display: inline-block;
             padding: 12px 24px;
@@ -224,41 +282,96 @@ export default function HomePage() {
             text-decoration: none;
             border-radius: 8px;
             font-weight: 600;
-            transition: background 0.3s, box-shadow 0.3s;
             text-align: center;
+            transition: background 0.3s, box-shadow 0.3s;
           }
+
           .card-button:hover {
             background: #8C65FF;
             box-shadow: 0 4px 12px rgba(90, 61, 191, 0.3);
           }
-          /* Стили для неактивных кнопок */
+
+          /* Неактивные кнопки */
           .card-button.disabled {
             background: #ccc;
             pointer-events: none;
             cursor: not-allowed;
             opacity: 0.7;
           }
+
+          /* Медиа-запросы для адаптации */
+
+          @media (max-width: 992px) {
+            /* Немного уменьшим размеры заголовков и отступы */
+            .welcome-section {
+              padding: 40px 20px;
+              margin: 40px auto 20px;
+            }
+
+            .welcome-title {
+              font-size: 2.2rem;
+            }
+
+            .welcome-subtitle {
+              font-size: 1.1rem;
+            }
+
+            .main-cloud {
+              padding: 30px;
+            }
+
+            .card-icon {
+              width: 200px;
+              height: 200px;
+            }
+
+            .card-title {
+              font-size: 1.4rem;
+            }
+          }
+
           @media (max-width: 768px) {
+            .welcome-title {
+              font-size: 2rem;
+            }
+
             .cards-section {
               flex-direction: column;
+              gap: 25px;
               align-items: center;
             }
+
             .card {
-              max-width: 100%;
-              width: 100%;
+              max-width: 400px;
             }
           }
-          /* Центрирование и увеличение картинки в секции Hero */
-          .hero-illustration {
-            flex: 1 1 400px;
-            margin: 1rem;
-            text-align: center;
-          }
-          .hero-illustration img {
-            width: 80%;
-            height: auto;
-            margin: 0 auto;
-            display: block;
+
+          @media (max-width: 480px) {
+            .welcome-title {
+              font-size: 1.8rem;
+            }
+
+            .welcome-subtitle {
+              font-size: 1rem;
+            }
+
+            .card-icon {
+              width: 160px;
+              height: 160px;
+            }
+
+            .card-title {
+              font-size: 1.2rem;
+            }
+
+            .card-text {
+              font-size: 0.9rem;
+            }
+
+            .card {
+              padding: 16px;
+              border-radius: 16px;
+            }
           }
         `}</style>
       </div>

@@ -15,12 +15,12 @@ export default function Navbar() {
         try {
           const provider = new ethers.BrowserProvider(window.ethereum);
           // Получаем список аккаунтов без запроса на подключение
-          const accounts = await provider.send("eth_accounts", []);
+          const accounts = await provider.send('eth_accounts', []);
           if (accounts.length > 0) {
             setAddress(accounts[0]);
           }
         } catch (error) {
-          console.error("Error checking wallet:", error);
+          console.error('Error checking wallet:', error);
         }
       }
     };
@@ -34,9 +34,9 @@ export default function Navbar() {
       if (!window.ethereum) throw new Error('Установите MetaMask!');
       const provider = new ethers.BrowserProvider(window.ethereum);
       // Запрашиваем доступ к аккаунтам
-      await provider.send("eth_requestAccounts", []);
+      await provider.send('eth_requestAccounts', []);
       // После запроса получаем список аккаунтов
-      const accounts = await provider.send("eth_accounts", []);
+      const accounts = await provider.send('eth_accounts', []);
       if (accounts.length > 0) {
         setAddress(accounts[0]);
       }
@@ -89,17 +89,15 @@ export default function Navbar() {
             </button>
           </div>
         ) : (
-          <button
-            onClick={connectWallet}
-            className="btn"
-            disabled={isConnecting}
-          >
+          <button onClick={connectWallet} className="btn" disabled={isConnecting}>
             {isConnecting ? 'Connecting...' : 'Connect Wallet'}
           </button>
         )}
       </div>
 
       <style jsx>{`
+        /* Основная стилизация */
+
         .navbar {
           display: flex;
           justify-content: space-between;
@@ -113,6 +111,7 @@ export default function Navbar() {
           right: 0;
           z-index: 1000;
         }
+
         .brand {
           font-family: 'Playfair Display', serif;
           background: linear-gradient(90deg, #8e44ad, #c39bd3);
@@ -122,11 +121,13 @@ export default function Navbar() {
           font-weight: bold;
           text-decoration: none;
         }
+
         .links {
           display: flex;
           gap: 1.5rem;
           align-items: center;
         }
+
         .navButton {
           display: inline-block;
           padding: 0.6rem 1rem;
@@ -141,19 +142,23 @@ export default function Navbar() {
           border: none;
           cursor: pointer;
         }
+
         .navButton:disabled {
           opacity: 0.6;
           cursor: not-allowed;
         }
+
         .navButton:hover:not(:disabled) {
           transform: scale(1.05);
           box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
         }
+
         .walletInfo {
           display: flex;
           gap: 1rem;
           align-items: center;
         }
+
         .address {
           display: flex;
           align-items: center;
@@ -162,6 +167,7 @@ export default function Navbar() {
           font-family: 'Lato', sans-serif;
           font-weight: 700;
         }
+
         .btn {
           padding: 0.75rem 1.5rem;
           border-radius: 12px;
@@ -174,19 +180,85 @@ export default function Navbar() {
           transition: transform 0.2s ease, box-shadow 0.2s ease;
           box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
+
         .btn:disabled {
           opacity: 0.6;
           cursor: not-allowed;
         }
+
         .btn:hover:not(:disabled) {
           transform: scale(1.05);
           box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
         }
+
         .disconnect {
           background: linear-gradient(45deg, #7d3c98, #af7ac5);
         }
         .disconnect:hover:not(:disabled) {
           transform: scale(1.05);
+        }
+
+        /* Адаптивная стилизация (медиа-запросы) */
+
+        /* При ширине до 992px немного уменьшим шрифты и отступы */
+        @media (max-width: 992px) {
+          .brand {
+            font-size: 1.6rem;
+          }
+          .navButton,
+          .btn {
+            padding: 0.5rem 1rem;
+          }
+        }
+
+        /* При ширине до 768px переходим на более компактное расположение */
+        @media (max-width: 768px) {
+          .navbar {
+            padding: 1rem;
+            flex-wrap: wrap; /* Разрешаем перенос элементов */
+          }
+
+          .brand {
+            margin-bottom: 0.5rem;
+          }
+
+          /* Размещаем ссылки одной колонкой или в несколько строк */
+          .links {
+            width: 100%;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 0.8rem;
+          }
+
+          .navButton,
+          .btn {
+            padding: 0.5rem 0.8rem;
+            font-size: 0.9rem;
+          }
+
+          .walletInfo {
+            gap: 0.8rem;
+          }
+        }
+
+        /* При очень маленьких экранах ещё уменьшим шрифты и иконки */
+        @media (max-width: 480px) {
+          .brand {
+            font-size: 1.4rem;
+          }
+
+          .navButton,
+          .btn {
+            font-size: 0.85rem;
+            padding: 0.4rem 0.6rem;
+          }
+          .links {
+            gap: 0.6rem;
+          }
+          .walletInfo {
+            flex-direction: column;
+            gap: 0.5rem;
+          }
         }
       `}</style>
     </nav>
