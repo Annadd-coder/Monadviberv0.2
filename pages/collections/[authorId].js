@@ -306,7 +306,7 @@ const authorData = {
     },
     collectionId: 6 // ID коллекции для этого автора
   },
-  "ALEX": {
+  "lzlz0506": {
     avatar: "/collections/Alex/avatar.png",
     about: "A modern romantic who combines technology and art into a single entity.",
     phrases: [
