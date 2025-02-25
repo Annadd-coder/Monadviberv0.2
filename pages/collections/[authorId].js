@@ -307,7 +307,7 @@ const authorData = {
     collectionId: 6 // ID коллекции для этого автора
   },
   "lzlz0506": {
-    avatar: "/collections/Alex/avatar.png",
+    avatar: "/collections/lzlz0506/avatar.png",
     about: "A modern romantic who combines technology and art into a single entity.",
     phrases: [
       "Where vision meets reality, art blossoms.",
@@ -332,16 +332,16 @@ const authorData = {
       "Architect emotions into visual form."
     ],
     artworks: [
-      "/collections/Alex/art1.png",
-      "/collections/Alex/art2.png",
-      "/collections/Alex/art3.png",
-      "/collections/Alex/art4.png",
-      "/collections/Alex/art5.png",
-      "/collections/Alex/art6.png",
-      "/collections/Alex/art7.png",
-      "/collections/Alex/art8.png",
-      "/collections/Alex/art9.png",
-      "/collections/Alex/art10.png"
+      "/collections/lzlz0506/art1.png",
+      "/collections/lzlz0506/art2.png",
+      "/collections/lzlz0506/art3.png",
+      "/collections/lzlz0506/art4.png",
+      "/collections/lzlz0506/art5.png",
+      "/collections/lzlz0506art6.png",
+      "/collections/lzlz0506/art7.png",
+      "/collections/lzlz0506art8.png",
+      "/collections/lzlz0506/art9.png",
+      "/collections/lzlz0506/art10.png"
     ],
     social: {
       twitter: "https://x.com/velicko_aleksej?s=21"
