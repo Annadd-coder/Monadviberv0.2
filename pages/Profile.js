@@ -14,7 +14,7 @@ const artMappings = {
     baseUrl:
       "https://blush-native-planarian-640.mypinata.cloud/ipfs/bafybeicrvi3jlscs46jpbtinyrgfh2gdqzccj5whkbtvql23iz3d6zaioq/Annae.nad/"
   },
-  "alex": {
+  "ALEX": {
     total: 9,
     baseUrl:
       "https://blush-native-planarian-640.mypinata.cloud/ipfs/bafybeicrvi3jlscs46jpbtinyrgfh2gdqzccj5whkbtvql23iz3d6zaioq/ALEX/"
