@@ -115,49 +115,55 @@ function Profile() {
       }
 
       const contract = new ethers.Contract(CONTRACT_ADDRESS, contractABI.abi, provider);
-      const totalSupply = await contract.totalSupply();
-      const totalSupplyNumber = Number(totalSupply);
 
-      const userNFTs = [];
-      for (let tokenId = 1; tokenId <= totalSupplyNumber; tokenId++) {
-        try {
-          const owner = await contract.ownerOf(tokenId);
-          if (owner.toLowerCase() === address.toLowerCase()) {
-            const tokenURI = await contract.tokenURI(tokenId);
+      // 1. Получаем количество NFT у пользователя
+      const balance = await contract.balanceOf(address);
 
-            // По умолчанию заменяем ipfs:// на публичный шлюз
-            let imageUrl = tokenURI.startsWith("ipfs://")
-              ? tokenURI.replace("ipfs://", "https://gateway.pinata.cloud/ipfs/")
-              : tokenURI;
-
-            // Если для этого tokenId в localStorage сохранён выбранный art – используем его
-            const storedArt = localStorage.getItem("mintedArt_" + tokenId);
-            if (storedArt) {
-              imageUrl = storedArt;
-            } else {
-              // Определяем коллекцию по tokenURI
-              const mappingKey = Object.keys(artMappings).find(key =>
-                tokenURI.toLowerCase().includes(key)
-              );
-              if (mappingKey) {
-                const mappingInfo = artMappings[mappingKey];
-                // Детерминированно выбираем art по хешу tokenURI
-                const artIndex = (hashString(tokenURI) % mappingInfo.total) + 1;
-                imageUrl = mappingInfo.baseUrl + "art" + artIndex + ".png";
-              }
-            }
-
-            userNFTs.push({
-              tokenId,
-              name: `NFT #${tokenId}`,
-              image: imageUrl,
-              tokenURI
-            });
-          }
-        } catch (err) {
-          console.error(`Ошибка при обработке токена ${tokenId}:`, err);
-        }
+      // 2. Вызываем tokenOfOwnerByIndex для каждого токена (параллельно)
+      const tokenIdsPromises = [];
+      for (let i = 0; i < balance; i++) {
+        tokenIdsPromises.push(contract.tokenOfOwnerByIndex(address, i));
       }
+      const tokenIds = await Promise.all(tokenIdsPromises);
+
+      // 3. Параллельно получаем tokenURI для всех полученных tokenId
+      const tokenUriPromises = tokenIds.map((tokenId) => contract.tokenURI(tokenId));
+      const tokenUris = await Promise.all(tokenUriPromises);
+
+      // 4. Формируем конечный массив NFT
+      const userNFTs = tokenIds.map((tokenIdBigInt, idx) => {
+        const tokenId = Number(tokenIdBigInt);
+        let tokenURI = tokenUris[idx];
+
+        // По умолчанию заменяем ipfs:// на публичный шлюз
+        let imageUrl = tokenURI.startsWith("ipfs://")
+          ? tokenURI.replace("ipfs://", "https://gateway.pinata.cloud/ipfs/")
+          : tokenURI;
+
+        // Проверяем localStorage, вдруг там уже сохранён выбранный art
+        const storedArt = localStorage.getItem("mintedArt_" + tokenId);
+        if (storedArt) {
+          imageUrl = storedArt;
+        } else {
+          // Определяем коллекцию по tokenURI
+          const mappingKey = Object.keys(artMappings).find(key =>
+            tokenURI.toLowerCase().includes(key)
+          );
+          if (mappingKey) {
+            const mappingInfo = artMappings[mappingKey];
+            // Детерминированно выбираем art по хешу tokenURI
+            const artIndex = (hashString(tokenURI) % mappingInfo.total) + 1;
+            imageUrl = mappingInfo.baseUrl + "art" + artIndex + ".png";
+          }
+        }
+
+        return {
+          tokenId,
+          name: `NFT #${tokenId}`,
+          image: imageUrl,
+          tokenURI
+        };
+      });
 
       setMintedNFTs(userNFTs);
     } catch (err) {
@@ -290,8 +296,6 @@ function Profile() {
         }
 
         /* --- Медиа-запросы (адаптив) --- */
-
-        /* Для планшетов и узких экранов */
         @media (max-width: 768px) {
           .heading {
             font-size: 2rem;
@@ -316,7 +320,6 @@ function Profile() {
           }
         }
 
-        /* Для совсем маленьких экранов */
         @media (max-width: 480px) {
           .heading {
             font-size: 1.8rem;

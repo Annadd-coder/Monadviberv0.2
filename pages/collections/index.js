@@ -7,7 +7,7 @@ const collections = [
   { id: 'daha1522',       name: 'daha1522',       image: '/collections/daha1522/avatar.png' },
   { id: 'weeklang',       name: 'weeklang',       image: '/collections/weeklang/avatar.png' },
   { id: 'n1nja0207',      name: 'n1nja0207',      image: '/collections/n1nja0207/avatar.png' },
-  { id: 'Alex',           name: 'Alex',           image: '/collections/Alex/avatar.png' },
+  { id: 'lzlz0506',       name: 'lzlz0506',       image: '/collections/lzlz0506/avatar.png' },
   { id: 'twistzz666',     name: 'twistzz666',     image: '/collections/twistzz666/avatar.png' },
   { id: 'Dohobob',   name: 'Dohobob',            image: '/collections/Dohobob/avatar.png' },
   // =============== Additional New Authors ===============
