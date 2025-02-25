@@ -741,7 +741,7 @@ export default function AuthorPage() {
 
   // Функция для шаринга в Twitter (без изменений)
   const shareOnTwitter = useCallback(() => {
-    const siteLink = "https://monadviber.com";
+    const siteLink = "https://monadviber.vercel.app/";
     const tweetText = `Phrase of the day from ${authorId}: "${currentPhrase}"\nDive into the vibes of Monad's art: ${siteLink}`;
     const tweetUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(tweetText)}`;
     window.open(tweetUrl, "_blank");
