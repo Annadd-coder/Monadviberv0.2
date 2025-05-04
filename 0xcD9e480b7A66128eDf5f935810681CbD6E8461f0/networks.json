@@ -1,0 +1,8 @@
+{
+  "monad-testnet": {
+    "mvb": {
+      "address": "0xcD9e480b7A66128eDf5f935810681CbD6E8461f0",
+      "startBlock": 0
+    }
+  }
+}

@@ -1,4 +1,5 @@
-import { useContext, useEffect, useState } from 'react';
+// components/Navbar.js
+import { useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { ethers } from 'ethers';
 import { FiUser, FiLogOut } from 'react-icons/fi';
 import { WalletContext } from '../pages/_app';
@@ -7,74 +8,125 @@ import Link from 'next/link';
 export default function Navbar() {
   const { address, setAddress } = useContext(WalletContext);
   const [isConnecting, setIsConnecting] = useState(false);
+  const providerRef = useRef(null);          // ⬅️ убрали дженерик
 
-  // Проверка подключенного кошелька
+  /* -------------------------------------------------- */
+  /*  Provider + event listeners set‑up (once, on mount) */
+  /* -------------------------------------------------- */
   useEffect(() => {
-    const checkWallet = async () => {
-      if (typeof window !== 'undefined' && window.ethereum) {
-        try {
-          const provider = new ethers.BrowserProvider(window.ethereum);
-          // Получаем список аккаунтов без запроса на подключение
-          const accounts = await provider.send('eth_accounts', []);
-          if (accounts.length > 0) {
-            setAddress(accounts[0]);
-          }
-        } catch (error) {
-          console.error('Error checking wallet:', error);
-        }
+    if (typeof window === 'undefined' || !window.ethereum) return;
+
+    providerRef.current = new ethers.BrowserProvider(window.ethereum);
+
+    const handleAccountsChanged = (accounts) => {      // ⬅️ убрали тип
+      if (accounts.length === 0) {
+        disconnectWallet();
+      } else {
+        setAddress(accounts[0]);
+        window.localStorage.setItem('monadWallet', accounts[0]);
       }
     };
-    checkWallet();
+
+    const handleChainChanged = () => window.location.reload();
+
+    window.ethereum.on('accountsChanged', handleAccountsChanged);
+    window.ethereum.on('chainChanged', handleChainChanged);
+
+    return () => {
+      window.ethereum?.removeListener?.('accountsChanged', handleAccountsChanged);
+      window.ethereum?.removeListener?.('chainChanged', handleChainChanged);
+    };
   }, [setAddress]);
 
-  // Подключение кошелька
-  const connectWallet = async () => {
+  /* ----------------------------------------------- */
+  /*  Restore previous session or silently check auth */
+  /* ----------------------------------------------- */
+  useEffect(() => {
+    const restoreSession = async () => {
+      if (typeof window === 'undefined' || !window.ethereum) return;
+
+      const cached = window.localStorage.getItem('monadWallet');
+      if (cached) {
+        setAddress(cached);
+        return;
+      }
+
+      try {
+        const provider = providerRef.current ?? new ethers.BrowserProvider(window.ethereum);
+        const accounts = await provider.send('eth_accounts', []);
+        if (accounts.length > 0) {
+          setAddress(accounts[0]);
+          window.localStorage.setItem('monadWallet', accounts[0]);
+        }
+      } catch (err) {
+        console.error('Error restoring wallet session:', err);
+      }
+    };
+
+    restoreSession();
+  }, [setAddress]);
+
+  /* ---------------------------- */
+  /*  Connect / disconnect wallet */
+  /* ---------------------------- */
+  const connectWallet = useCallback(async () => {
+    if (!window.ethereum) {
+      alert('MetaMask not found. Please install it to continue.');
+      return;
+    }
+
+    if (isConnecting) return; // guard
+
     setIsConnecting(true);
     try {
-      if (!window.ethereum) throw new Error('Установите MetaMask!');
-      const provider = new ethers.BrowserProvider(window.ethereum);
-      // Запрашиваем доступ к аккаунтам
-      await provider.send('eth_requestAccounts', []);
-      // После запроса получаем список аккаунтов
-      const accounts = await provider.send('eth_accounts', []);
+      const provider = providerRef.current ?? new ethers.BrowserProvider(window.ethereum);
+      const accounts = await provider.send('eth_requestAccounts', []);
       if (accounts.length > 0) {
         setAddress(accounts[0]);
+        window.localStorage.setItem('monadWallet', accounts[0]);
       }
-    } catch (error) {
-      alert(error.message);
+    } catch (err) {
+      if (err?.code === -32002) {
+        alert('Запрос уже открыт в MetaMask. Подтвердите его, пожалуйста.');
+      } else if (err?.code === 4001) {
+        console.info('User rejected wallet connection.');
+      } else {
+        console.error('Wallet connection error:', err);
+        alert(err?.message || 'Failed to connect wallet.');
+      }
     } finally {
       setIsConnecting(false);
     }
-  };
+  }, [isConnecting, setAddress]);
 
-  // Отключение кошелька
-  const disconnectWallet = () => {
+  const disconnectWallet = useCallback(() => {
     setAddress(null);
     window.localStorage.removeItem('monadWallet');
-  };
+  }, [setAddress]);
 
+  /* ------------- */
+  /*  Render JSX   */
+  /* ------------- */
   return (
     <nav className="navbar">
-      <Link legacyBehavior href="/">
+      <Link href="/" legacyBehavior>
         <a className="brand">MonadViber</a>
       </Link>
 
       <div className="links">
-        <Link legacyBehavior href="/about">
+        <Link href="/about" legacyBehavior>
           <a className="navButton">About</a>
         </Link>
-        <Link legacyBehavior href="/collections">
+        <Link href="/collections" legacyBehavior>
           <a className="navButton">Collections</a>
         </Link>
-
+        <Link href="/feed" legacyBehavior>
+          <a className="navButton">Feed</a>
+        </Link>
         <button className="navButton" disabled>
           MOAP (Soon)
         </button>
-        <button className="navButton" disabled>
-          Auction (Soon)
-        </button>
-
-        <Link legacyBehavior href="/Profile">
+        <Link href="/Profile" legacyBehavior>
           <a className="navButton">Profile</a>
         </Link>
 
@@ -95,9 +147,8 @@ export default function Navbar() {
         )}
       </div>
 
+      {/* ✅ Styles kept identical to previous version for visual consistency */}
       <style jsx>{`
-        /* Основная стилизация */
-
         .navbar {
           display: flex;
           justify-content: space-between;
@@ -111,7 +162,6 @@ export default function Navbar() {
           right: 0;
           z-index: 1000;
         }
-
         .brand {
           font-family: 'Playfair Display', serif;
           background: linear-gradient(90deg, #8e44ad, #c39bd3);
@@ -121,13 +171,11 @@ export default function Navbar() {
           font-weight: bold;
           text-decoration: none;
         }
-
         .links {
           display: flex;
           gap: 1.5rem;
           align-items: center;
         }
-
         .navButton {
           display: inline-block;
           padding: 0.6rem 1rem;
@@ -142,23 +190,19 @@ export default function Navbar() {
           border: none;
           cursor: pointer;
         }
-
         .navButton:disabled {
           opacity: 0.6;
           cursor: not-allowed;
         }
-
         .navButton:hover:not(:disabled) {
           transform: scale(1.05);
           box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
         }
-
         .walletInfo {
           display: flex;
           gap: 1rem;
           align-items: center;
         }
-
         .address {
           display: flex;
           align-items: center;
@@ -167,7 +211,6 @@ export default function Navbar() {
           font-family: 'Lato', sans-serif;
           font-weight: 700;
         }
-
         .btn {
           padding: 0.75rem 1.5rem;
           border-radius: 12px;
@@ -180,27 +223,21 @@ export default function Navbar() {
           transition: transform 0.2s ease, box-shadow 0.2s ease;
           box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
-
         .btn:disabled {
           opacity: 0.6;
           cursor: not-allowed;
         }
-
         .btn:hover:not(:disabled) {
           transform: scale(1.05);
           box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
         }
-
         .disconnect {
           background: linear-gradient(45deg, #7d3c98, #af7ac5);
         }
         .disconnect:hover:not(:disabled) {
           transform: scale(1.05);
         }
-
-        /* Адаптивная стилизация (медиа-запросы) */
-
-        /* При ширине до 992px немного уменьшим шрифты и отступы */
+        /* Responsive tweaks */
         @media (max-width: 992px) {
           .brand {
             font-size: 1.6rem;
@@ -210,43 +247,33 @@ export default function Navbar() {
             padding: 0.5rem 1rem;
           }
         }
-
-        /* При ширине до 768px переходим на более компактное расположение */
         @media (max-width: 768px) {
           .navbar {
             padding: 1rem;
-            flex-wrap: wrap; /* Разрешаем перенос элементов */
+            flex-wrap: wrap;
           }
-
           .brand {
             margin-bottom: 0.5rem;
           }
-
-          /* Размещаем ссылки одной колонкой или в несколько строк */
           .links {
             width: 100%;
             justify-content: center;
             flex-wrap: wrap;
             gap: 0.8rem;
           }
-
           .navButton,
           .btn {
             padding: 0.5rem 0.8rem;
             font-size: 0.9rem;
           }
-
           .walletInfo {
             gap: 0.8rem;
           }
         }
-
-        /* При очень маленьких экранах ещё уменьшим шрифты и иконки */
         @media (max-width: 480px) {
           .brand {
             font-size: 1.4rem;
           }
-
           .navButton,
           .btn {
             font-size: 0.85rem;

@@ -1,34 +1,51 @@
 import Link from 'next/link';
 
-const collections = [
-  { id: 'Annae.nad',      name: 'Annae.nad',      image: '/collections/Annae.nad/avatar.png' },
-  { id: 'Pugovka_Mari',   name: 'Pugovka_Mari',   image: '/collections/Pugovka_Mari/avatar.png' },
-  { id: 'akellaa2023',    name: 'akellaa2023',    image: '/collections/akellaa2023/avatar.png' },
-  { id: 'daha1522',       name: 'daha1522',       image: '/collections/daha1522/avatar.png' },
-  { id: 'weeklang',       name: 'weeklang',       image: '/collections/weeklang/avatar.png' },
-  { id: 'n1nja0207',      name: 'n1nja0207',      image: '/collections/n1nja0207/avatar.png' },
-  { id: 'lzlz0506',       name: 'lzlz0506',       image: '/collections/lzlz0506/avatar.png' },
-  { id: 'twistzz666',     name: 'twistzz666',     image: '/collections/twistzz666/avatar.png' },
-  { id: 'Dohobob',   name: 'Dohobob',            image: '/collections/Dohobob/avatar.png' },
-  // =============== Additional New Authors ===============
-  { id: 'Gabriel',        name: 'Gabriel',        image: '/collections/Gabriel/avatar.png' },
-  { id: 'avader',         name: 'avader',         image: '/collections/avader/avatar.png' },
-  { id: 'solncestoyaniee', name: 'solncestoyaniee', image: '/collections/solncestoyaniee/avatar.png' }
-];
+/** Список авторов → { cid }  */
+const AUTHORS = {
+  twistzz:        { cid: 'bafybeif2hdabepr5je2vblwi6iivwhzne3rwmql7qhwgcn3cwhpgqqzyv4' },
+  tchan4323:      { cid: 'bafybeiff2kxd43msni7hwzycq26b45ned5b5yeuzb5xz4gfiw7jp7ma3xq' },
+  solncestoyanie: { cid: 'bafybeidnib5rcvipty6hy4p6wwvrc7ul37wz7alsdlebvefbh7fpjkfmce' },
+  Richard:        { cid: 'bafybeiao64ba6ipurjijmga6e4hyrlsmki2bkkqxqxhx7j6uturpjpts3m' },
+  N1nja:          { cid: 'bafybeihmw4h43usdknxf35jhhybusws4m3fnzykekkwnm727bocfkzvdiy' },
+  miss_port:      { cid: 'bafybeianlconikn7cv6ywphrewlbjfpvvj7uxi4sjwlryu7p22v7dvg4re' },
+  lzlzlz:         { cid: 'bafybeidb3kcti7jkbv33pgqpci5l3hd7usgjlxhdzvpvktn7ha7avurp7e' },
+  kasyak:         { cid: 'bafybeidp6q3qkg5e3sdxrpmkwqjt3zu6m5qs2kioeeq336g7gxvqdtwjuu' },
+  Ishan:          { cid: 'bafybeibspj7jah6wikgfmgxc5bmcxvxtgycqepf4zzx75c7mdp4p6vojne' },
+  ghooolyache:    { cid: 'bafybeicgcphm5r3zoogtod5teypm7olodg5akpvre534edjtixex27wyha' },
+  gabriel:        { cid: 'bafybeidx3u73jxyik5wcuyvxx24xbmpyqqi35yblytcapttlmupoc23pju' },
+  Dohobob:        { cid: 'bafybeieaxng266fbs4s4sdaazuf7czhmat4i6skyudx2d44xnrclbgbai4' },
+  DayzZzer:       { cid: 'bafybeico6ircxzelf3gsd6wd22hl3gasuclosh5mkkb2eauhko3uqh7hxa' },
+  bromaxo:        { cid: 'bafybeidkhpcpckelugdjluv4tsnlj7edcb64j2kkm3dbdjakwaz3mp275u' },
+  Avader:         { cid: 'bafybeiazcrjfw45voghatj2kj2ipaic6xomygt5ai3x5k4xpron4vwarte' },
+  Antgeo:         { cid: 'bafybeibylnlnfj7eip4m4l5tskyjzv2xjf7jr4wocjrapeskyph4ybakzq' },
+  AnnaD:          { cid: 'bafybeiclgdzyjazcsgiln6k3uhcxmjy3jjk2cvd7eodawg74t6oihky35m' },
+  Akela:          { cid: 'bafybeibptnkdylcdixqtoud5byiu35uma4z2vsqnih7z7m6ds6sj7lqgpi' },
+};
 
-export default function CollectionsPage() {
+// Подготовка карточек авторов
+const collections = Object.keys(AUTHORS).map((id) => ({
+  id,
+  image: `/collections/${id}/avatar.png`,
+}));
+
+export default function HomePage() {
   return (
     <div style={styles.container}>
-      <h1 style={styles.title}>Author Collections</h1>
-      <p style={styles.subtitle}>Choose an author to immerse in their creative vibes.</p>
+      <h1 style={styles.title}>Choose an author to immerse in their vibes.</h1>
+
       <div style={styles.grid}>
         {collections.map((col) => (
-          <Link key={col.id} href={`/collections/${col.id}`} legacyBehavior>
-            <div style={styles.card}>
-              <img src={col.image} alt={col.name} style={styles.image} />
-              <h3 style={styles.cardTitle}>{col.name}</h3>
-            </div>
-          </Link>
+          <div key={col.id} style={styles.card}>
+            {/* Переход по картинке */}
+            <Link href={`/collections/${col.id}`} legacyBehavior>
+              <img src={col.image} alt={col.id} style={styles.image} />
+            </Link>
+            <h3 style={styles.cardTitle}>{col.id}</h3>
+            {/* Простая кнопка */}
+            <Link href={`/collections/${col.id}`} legacyBehavior>
+              <button style={styles.button}>Click</button>
+            </Link>
+          </div>
         ))}
       </div>
     </div>
@@ -37,45 +54,49 @@ export default function CollectionsPage() {
 
 const styles = {
   container: {
-    backgroundColor: "#f9f5ff",
-    minHeight: "100vh",
-    textAlign: "center",
-    padding: "80px 20px",
-    fontFamily: "'Helvetica Neue', Arial, sans-serif",
-    color: "#4a148c"
+    backgroundColor: '#f9f5ff',
+    minHeight: '100vh',
+    textAlign: 'center',
+    padding: '80px 20px',
+    fontFamily: 'Poppins, sans-serif',
+    color: '#4a148c',
   },
-  title: {
-    fontSize: "2rem",
-    marginBottom: "20px",
-    fontWeight: 700
-  },
-  subtitle: {
-    fontSize: "1.2rem",
-    marginBottom: "40px"
-  },
+  title: { fontSize: '2.2rem', fontWeight: 700 },
   grid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-    gap: "30px",
-    justifyItems: "center",
-    marginTop: "30px"
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(220px,1fr))',
+    gap: '30px',
+    justifyItems: 'center',
+    marginTop: '40px',
   },
   card: {
-    cursor: "pointer",
-    width: "220px",
-    padding: "15px",
-    backgroundColor: "#fff",
-    borderRadius: "12px",
-    boxShadow: "0 6px 20px rgba(0,0,0,0.1)",
-    transition: "transform 0.25s ease, box-shadow 0.25s ease"
+    cursor: 'pointer',
+    width: '220px',
+    padding: '15px',
+    backgroundColor: '#fff',
+    borderRadius: '12px',
+    boxShadow: '0 6px 18px rgba(0,0,0,0.1)',
+    transition: 'transform .25s, box-shadow .25s',
   },
   image: {
-    width: "100%",
-    borderRadius: "8px",
-    marginBottom: "10px"
+    width: '100%',
+    height: '220px',
+    objectFit: 'cover',
+    borderRadius: '8px',
+    marginBottom: '10px',
   },
   cardTitle: {
-    fontSize: "1.1rem",
-    fontWeight: 600
-  }
+    fontSize: '1.1rem',
+    fontWeight: 600,
+    marginBottom: '8px',
+  },
+  button: {
+    padding: '6px 14px',
+    background: 'linear-gradient(45deg,#8e44ad,#c39bd3)',
+    border: 'none',
+    borderRadius: '8px',
+    color: '#fff',
+    fontWeight: 600,
+    cursor: 'pointer',
+  },
 };

@@ -1,345 +1,154 @@
+// pages/Profile.js – clean investor‑friendly cabinet (NFT gallery, no auction)
 import { useRouter } from 'next/router';
-import { useEffect, useState, useContext } from 'react';
+import { useEffect, useState, useContext, useCallback } from 'react';
 import { ethers } from 'ethers';
 import { WalletContext } from './_app';
 import contractABI from '../src/abi/MVB.json';
 
-const CONTRACT_ADDRESS = '0x2b4407a24E602B95Cd73fa0FE3596Ce2bDe88bb1';
-const MONAD_CHAIN_ID = 10143;
+const CONTRACT_ADDRESS = '0xcD9e480b7A66128eDf5f935810681CbD6E8461f0';
+const MONAD_CHAIN_ID = 10143n; // BigInt
 
-// Mapping для картинок каждого автора (ключи — название коллекции в нижнем регистре)
-const artMappings = {
-  "annae.nad": {
-    total: 20,
-    baseUrl:
-      "https://blush-native-planarian-640.mypinata.cloud/ipfs/bafybeicrvi3jlscs46jpbtinyrgfh2gdqzccj5whkbtvql23iz3d6zaioq/Annae.nad/"
-  },
-  "lzlz0506": {
-    total: 9,
-    baseUrl:
-      "https://blush-native-planarian-640.mypinata.cloud/ipfs/bafybeicrvi3jlscs46jpbtinyrgfh2gdqzccj5whkbtvql23iz3d6zaioq/ALEX/"
-  },
-  "dohobob": {
-    total: 20,
-    baseUrl:
-      "https://blush-native-planarian-640.mypinata.cloud/ipfs/bafybeicrvi3jlscs46jpbtinyrgfh2gdqzccj5whkbtvql23iz3d6zaioq/Dohobob/"
-  },
-  "gabriel": {
-    total: 10,
-    baseUrl:
-      "https://blush-native-planarian-640.mypinata.cloud/ipfs/bafybeicrvi3jlscs46jpbtinyrgfh2gdqzccj5whkbtvql23iz3d6zaioq/Gabriel/"
-  },
-  "pugovka_mari": {
-    total: 20,
-    baseUrl:
-      "https://blush-native-planarian-640.mypinata.cloud/ipfs/bafybeicrvi3jlscs46jpbtinyrgfh2gdqzccj5whkbtvql23iz3d6zaioq/Pugovka_Mari/"
-  },
-  "akellaa2023": {
-    total: 7,
-    baseUrl:
-      "https://blush-native-planarian-640.mypinata.cloud/ipfs/bafybeicrvi3jlscs46jpbtinyrgfh2gdqzccj5whkbtvql23iz3d6zaioq/akellaa2023/"
-  },
-  "avader": {
-    total: 20,
-    baseUrl:
-      "https://blush-native-planarian-640.mypinata.cloud/ipfs/bafybeicrvi3jlscs46jpbtinyrgfh2gdqzccj5whkbtvql23iz3d6zaioq/avader/"
-  },
-  "daha1522": {
-    total: 12,
-    baseUrl:
-      "https://blush-native-planarian-640.mypinata.cloud/ipfs/bafybeicrvi3jlscs46jpbtinyrgfh2gdqzccj5whkbtvql23iz3d6zaioq/daha1522/"
-  },
-  "n1nja0207": {
-    total: 19,
-    baseUrl:
-      "https://blush-native-planarian-640.mypinata.cloud/ipfs/bafybeicrvi3jlscs46jpbtinyrgfh2gdqzccj5whkbtvql23iz3d6zaioq/n1nja0207/"
-  },
-  "solncestoyaniee": {
-    total: 20,
-    baseUrl:
-      "https://blush-native-planarian-640.mypinata.cloud/ipfs/bafybeicrvi3jlscs46jpbtinyrgfh2gdqzccj5whkbtvql23iz3d6zaioq/solncestoyaniee/"
-  },
-  "twistzz666": {
-    total: 28,
-    baseUrl:
-      "https://blush-native-planarian-640.mypinata.cloud/ipfs/bafybeicrvi3jlscs46jpbtinyrgfh2gdqzccj5whkbtvql23iz3d6zaioq/twistzz666/"
-  },
-  "weeklang": {
-    total: 16,
-    baseUrl:
-      "https://blush-native-planarian-640.mypinata.cloud/ipfs/bafybeicrvi3jlscs46jpbtinyrgfh2gdqzccj5whkbtvql23iz3d6zaioq/weeklang/"
-  }
-};
-
-// Простая функция хеширования для детерминированного выбора art
-function hashString(str) {
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    hash = ((hash << 5) - hash) + str.charCodeAt(i);
-    hash |= 0; // преобразование в 32-битное число
-  }
-  return Math.abs(hash);
-}
-
-function Profile() {
+export default function Profile() {
   const router = useRouter();
-  const { address } = useContext(WalletContext);
+  const { address: contextAddr } = useContext(WalletContext);
 
-  const [mintedNFTs, setMintedNFTs] = useState([]);
+  /*  Core state  */
+  const [profileAddress, setProfileAddress] = useState(null);
+  const [nfts, setNfts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  /* ----------------------------------- */
+  /*   Determine which address to show   */
+  /* ----------------------------------- */
   useEffect(() => {
-    if (!address) {
-      // Если нет адреса, отправляем на главную
-      router.push('/');
-    } else {
-      fetchUserNFTs();
-    }
-  }, [address, router]);
+    const addr = router.query.address || contextAddr || null;
+    setProfileAddress(addr);
+  }, [router.query.address, contextAddr]);
 
-  const fetchUserNFTs = async () => {
+  /* ----------------------------------- */
+  /*    Ensure MetaMask & right network   */
+  /* ----------------------------------- */
+  const getProviderOnMonad = useCallback(async () => {
+    if (typeof window === 'undefined' || !window.ethereum) throw new Error('MetaMask not found');
+    const provider = new ethers.BrowserProvider(window.ethereum);
+    const net = await provider.getNetwork();
+    if (net.chainId !== MONAD_CHAIN_ID) {
+      await window.ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: `0x${MONAD_CHAIN_ID.toString(16)}` }] });
+    }
+    return provider;
+  }, []);
+
+  /* ----------------------------------- */
+  /*            Fetch user NFTs           */
+  /* ----------------------------------- */
+  const fetchNFTs = useCallback(async () => {
+    if (!profileAddress) return;
     try {
       setLoading(true);
       setError(null);
-
-      if (!window.ethereum) {
-        throw new Error('MetaMask не установлен');
-      }
-
-      const provider = new ethers.BrowserProvider(window.ethereum);
-      const network = await provider.getNetwork();
-
-      if (network.chainId !== BigInt(MONAD_CHAIN_ID)) {
-        throw new Error('Пожалуйста, переключитесь на сеть Monad Testnet');
-      }
-
+      const provider = await getProviderOnMonad();
       const contract = new ethers.Contract(CONTRACT_ADDRESS, contractABI.abi, provider);
 
-      // 1. Получаем количество NFT у пользователя
-      const balance = await contract.balanceOf(address);
+      const bal = await contract.balanceOf(profileAddress);
+      const total = Number(bal);
+      if (!total) return setNfts([]);
 
-      // 2. Вызываем tokenOfOwnerByIndex для каждого токена (параллельно)
-      const tokenIdsPromises = [];
-      for (let i = 0; i < balance; i++) {
-        tokenIdsPromises.push(contract.tokenOfOwnerByIndex(address, i));
-      }
-      const tokenIds = await Promise.all(tokenIdsPromises);
-
-      // 3. Параллельно получаем tokenURI для всех полученных tokenId
-      const tokenUriPromises = tokenIds.map((tokenId) => contract.tokenURI(tokenId));
-      const tokenUris = await Promise.all(tokenUriPromises);
-
-      // 4. Формируем конечный массив NFT
-      const userNFTs = tokenIds.map((tokenIdBigInt, idx) => {
-        const tokenId = Number(tokenIdBigInt);
-        let tokenURI = tokenUris[idx];
-
-        // По умолчанию заменяем ipfs:// на публичный шлюз
-        let imageUrl = tokenURI.startsWith("ipfs://")
-          ? tokenURI.replace("ipfs://", "https://gateway.pinata.cloud/ipfs/")
-          : tokenURI;
-
-        // Проверяем localStorage, вдруг там уже сохранён выбранный art
-        const storedArt = localStorage.getItem("mintedArt_" + tokenId);
-        if (storedArt) {
-          imageUrl = storedArt;
-        } else {
-          // Определяем коллекцию по tokenURI
-          const mappingKey = Object.keys(artMappings).find(key =>
-            tokenURI.toLowerCase().includes(key)
-          );
-          if (mappingKey) {
-            const mappingInfo = artMappings[mappingKey];
-            // Детерминированно выбираем art по хешу tokenURI
-            const artIndex = (hashString(tokenURI) % mappingInfo.total) + 1;
-            imageUrl = mappingInfo.baseUrl + "art" + artIndex + ".png";
-          }
+      // robustly fetch tokenIds even if enumeration glitches
+      const tokenIds = [];
+      for (let i = 0; i < total; i++) {
+        try {
+          const tid = await contract.tokenOfOwnerByIndex(profileAddress, i);
+          tokenIds.push(tid);
+        } catch (e) {
+          // Occasionally index > balance due to race‑condition → stop
+          console.warn('tokenOfOwnerByIndex revert at', i, e.reason || e);
+          break;
         }
+      }
 
-        return {
-          tokenId,
-          name: `NFT #${tokenId}`,
-          image: imageUrl,
-          tokenURI
-        };
-      });
+      const meta = await Promise.all(tokenIds.map(async (tid) => {
+        try {
+          let uri = await contract.tokenURI(tid);
+          if (uri.startsWith('ipfs://')) uri = uri.replace('ipfs://', 'https://gateway.pinata.cloud/ipfs/');
+          const res = await fetch(uri);
+          if (!res.ok) throw new Error('meta fetch fail');
+          const json = await res.json();
+          let img = json.image || '';
+          if (img.startsWith('ipfs://')) img = img.replace('ipfs://', 'https://gateway.pinata.cloud/ipfs/');
+          return { tokenId: Number(tid), name: json.name ?? `NFT #${tid}`, description: json.description ?? '', image: img };
+        } catch (e) { console.error(e); return null; }
+      }));
 
-      setMintedNFTs(userNFTs);
-    } catch (err) {
-      console.error('Ошибка при получении NFT:', err);
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
+      setNfts(meta.filter(Boolean));
+    } catch (e) {
+      console.error(e);
+      setError(e.message);
+    } finally { setLoading(false); }
+  }, [profileAddress, getProviderOnMonad]);
 
-  // Если кошелька нет — возвращаем null (или Loading / Redirect)
-  if (!address) return null;
+  /* initial fetch */
+  useEffect(() => { fetchNFTs(); }, [fetchNFTs]);
+
+  if (!profileAddress) {
+    return (
+      <div className="wrapper"><p className="info">Connect wallet to view your profile.</p></div>
+    );
+  }
 
   return (
-    <div className="pageWrapper">
-      <h1 className="heading">Your Personal Cabinet</h1>
-      <p className="subHeading">
-        Connected wallet address: <strong>{address}</strong>
-      </p>
+    <div className="wrapper">
+      <div className="hero">
+        <h1>Welcome to your Collection</h1>
+        <p className="addr">{profileAddress}</p>
+        <p className="sub">Total NFTs minted: <strong>{nfts.length}</strong></p>
+      </div>
 
-      <div className="section">
-        <h2 className="sectionTitle">Your Minted NFTs</h2>
-        {loading ? (
-          <p className="loadingText">Loading...</p>
-        ) : error ? (
-          <p className="errorText">Error: {error}</p>
-        ) : mintedNFTs.length === 0 ? (
-          <p className="emptyText">No NFTs minted yet.</p>
-        ) : (
+      {/* NFT grid */}
+      <section className="gallery">
+        {loading ? <p className="info">Loading…</p> : error ? <p className="error">{error}</p> : nfts.length === 0 ? <p className="info">You don’t own any NFTs yet.</p> : (
           <div className="grid">
-            {mintedNFTs.map((nft) => (
-              <div key={nft.tokenId} className="nftCard">
-                {nft.image && (
-                  <img src={nft.image} alt={nft.name} className="nftImage" />
-                )}
-                <div className="nftInfo">
-                  <h3 className="nftName">{nft.name}</h3>
-                  <p className="nftId">Token ID: {nft.tokenId}</p>
-                </div>
-              </div>
+            {nfts.map((nft) => (
+              <figure key={nft.tokenId} className="card">
+                <img src={nft.image} alt={nft.name} />
+                <figcaption>
+                  <span>{nft.name}</span>
+                  <small>#{nft.tokenId}</small>
+                </figcaption>
+              </figure>
             ))}
           </div>
         )}
-      </div>
+      </section>
 
-      {/* --- Стили через styled-jsx --- */}
       <style jsx>{`
-        .pageWrapper {
-          min-height: 100vh;
-          padding: 60px 20px;
-          background: linear-gradient(135deg, #ECE1F9 0%, #F8F4FD 100%);
-          font-family: Arial, sans-serif;
-          color: #4A148C;
+        .wrapper{
+          min-height:100vh; padding:80px 24px 60px; background:linear-gradient(135deg,#ECE1F9 0%,#F8F4FD 100%);
+          color:#4A148C; font-family:"Poppins",sans-serif;
         }
-        .heading {
-          font-size: 2.5rem;
-          margin-bottom: 0.5rem;
-          text-align: center;
-          font-weight: bold;
-        }
-        .subHeading {
-          font-size: 1.1rem;
-          margin-bottom: 2rem;
-          text-align: center;
-        }
-        .section {
-          max-width: 900px;
-          margin: 0 auto 40px;
-          background-color: rgba(255, 255, 255, 0.7);
-          border-radius: 10px;
-          padding: 20px;
-        }
-        .sectionTitle {
-          margin-top: 0;
-          font-size: 1.8rem;
-          font-weight: bold;
-          color: #6A1B9A;
-          text-align: center;
-        }
-        .loadingText {
-          text-align: center;
-          color: #4A148C;
-        }
-        .errorText {
-          text-align: center;
-          color: #FF0000;
-        }
-        .emptyText {
-          font-style: italic;
-          text-align: center;
-          color: #4A148C;
-        }
-        .grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-          gap: 20px;
-          margin-top: 20px;
-        }
-        .nftCard {
-          background-color: rgba(240, 240, 240, 0.9);
-          border-radius: 12px;
-          padding: 16px;
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-          transition: transform 0.2s;
-          text-align: center;
-        }
-        .nftCard:hover {
-          transform: translateY(-2px);
-        }
-        .nftImage {
-          width: 100%;
-          height: 250px;
-          object-fit: cover;
-          border-radius: 8px;
-          margin-bottom: 12px;
-        }
-        .nftInfo {
-          text-align: left;
-        }
-        .nftName {
-          margin: 0 0 8px;
-          font-size: 1.2rem;
-          font-weight: 600;
-          color: #4A148C;
-        }
-        .nftId {
-          margin: 0;
-          font-size: 0.8rem;
-          color: #8E24AA;
-        }
+        .hero{ text-align:center; margin-bottom:40px; }
+        .hero h1{ font-size:2.6rem; margin:0; }
+        .addr{ font-family:monospace; font-size:0.95rem; opacity:.8; }
+        .sub{ margin-top:8px; font-weight:500; }
 
-        /* --- Медиа-запросы (адаптив) --- */
-        @media (max-width: 768px) {
-          .heading {
-            font-size: 2rem;
-          }
-          .subHeading {
-            font-size: 1rem;
-            margin-bottom: 1.5rem;
-          }
-          .section {
-            margin: 0 auto 30px;
-            padding: 16px;
-          }
-          .sectionTitle {
-            font-size: 1.5rem;
-          }
-          .grid {
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-          }
-          .nftImage {
-            height: 200px;
-          }
-        }
+        .gallery{ max-width:1100px; margin:0 auto; }
+        .grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:24px; }
 
-        @media (max-width: 480px) {
-          .heading {
-            font-size: 1.8rem;
-          }
-          .subHeading {
-            font-size: 0.95rem;
-          }
-          .sectionTitle {
-            font-size: 1.3rem;
-          }
-          .grid {
-            grid-template-columns: 1fr;
-          }
-          .nftImage {
-            height: 180px;
-          }
+        .card{ background:#fff; border-radius:16px; overflow:hidden; box-shadow:0 6px 28px rgba(0,0,0,.12); transition:transform .25s; }
+        .card:hover{ transform:translateY(-4px); }
+        .card img{ width:100%; height:260px; object-fit:cover; }
+        figcaption{ padding:12px 16px; display:flex; justify-content:space-between; align-items:center; }
+        figcaption span{ font-weight:600; }
+        figcaption small{ color:#8E24AA; }
+
+        .info{ text-align:center; font-style:italic; }
+        .error{ text-align:center; color:#D50000; }
+
+        @media(max-width:768px){
+          .hero h1{ font-size:2rem; }
+          .card img{ height:200px; }
         }
       `}</style>
     </div>
   );
 }
-
-export default Profile;

@@ -35,3 +35,47 @@ button {
   70% { transform: scale(1.05); box-shadow: 0 0 20px rgba(255,215,0,0); }
   100% { transform: scale(1); box-shadow: 0 0 0 rgba(255,215,0,0); }
 }
+
+/* 🔑 1. Картина — ровно половина ширины экрана */
+.art {
+  width: 50vw;          /* 50 % ширины viewport’а */
+  height: auto;         /* сохраняем пропорции */
+  max-height: 60vh;     /* чтобы по высоте не выходила */
+  object-fit: contain;  /* без обрезания */
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0,0,0,.8);
+}
+
+/* 🔑 2. Кнопки — реально огромные */
+.controls button {
+  width: 140px;
+  height: 140px;
+  font-size: 3rem;      /* размер иконки */
+  border-radius: 50%;
+  border: none;
+  background: #7c2dff;
+  color: #fff;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  box-shadow:0 8px 28px rgba(124,45,255,.5);
+}
+
+/* ‑‑ расположение по центру снизу ‑‑ */
+.controls{
+  position:absolute;
+  left:50%;
+  bottom:8%;
+  transform:translateX(-50%);
+  display:flex;
+  gap:60px;
+}
+
+.btn {
+  /* сброс любых глобальных сбросов */
+  background: linear-gradient(45deg, #8e44ad, #c39bd3) !important;
+  color: #fff !important;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.15) !important;
+  padding: .75rem 1.5rem !important;
+  border-radius: 12px !important;
+}
