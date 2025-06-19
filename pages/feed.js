@@ -1,36 +1,34 @@
+// pages/feed.js
 import { useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { ethers } from 'ethers';
 import { motion } from 'framer-motion';
 import { FiPlusCircle, FiHeart, FiMessageSquare, FiX } from 'react-icons/fi';
 import { WalletContext } from './_app';
-import contractABI from '../src/abi/MVB.json';
+import contractABI from '../src/abi/MVB.json';          // ← корректный путь и имя
 import { supabase } from '../lib/supabaseClient';
 
 // Registry of authors and collection IDs
 const REGISTRY = {
-  twistzz: { count: 12, collectionId: 2 },
-  tchan4323: { count: 10, collectionId: 3 },
-  solncestoyanie: { count: 15, collectionId: 4 },
-  Richard: { count: 15, collectionId: 5 },
-  N1nja: { count: 15, collectionId: 6 },
-  miss_port: { count: 15, collectionId: 7 },
-  lzlzlz: { count: 15, collectionId: 8 },
-  kasyak: { count: 15, collectionId: 9 },
-  Ishan: { count: 15, collectionId: 10 },
-  ghooolyache: { count: 15, collectionId: 11 },
-  gabriel: { count: 15, collectionId: 12 },
-  Dohobob: { count: 15, collectionId: 13 },
-  DayzZzer: { count: 15, collectionId: 14 },
-  daha: { count: 15, collectionId: 15 },
-  bromaxo: { count: 15, collectionId: 16 },
-  Avader: { count: 15, collectionId: 17 },
-  Antgeo: { count: 15, collectionId: 18 },
-  AnnaD: { count: 15, collectionId: 19 },
-  Akela: { count: 15, collectionId: 20 },
+  twistzz:        { count: 12, collectionId: 2 },
+  tchan4323:      { count: 10, collectionId: 3 },
+  solncestoyanie: { count: 10, collectionId: 4 },
+  Richard:        { count: 10, collectionId: 5 },
+  miss_port:      { count: 10, collectionId: 7 },
+  lzlzlz:         { count: 10, collectionId: 8 },
+  kasyak:         { count: 10, collectionId: 9 },
+  Ishan:          { count: 10, collectionId: 10 },
+  ghooolyache:    { count: 10, collectionId: 11 },
+  gabriel:        { count: 10, collectionId: 12 },
+  Dohobob:        { count: 10, collectionId: 13 },
+  DayzZzer:       { count: 10, collectionId: 14 },
+  bromaxo:        { count: 10, collectionId: 16 },
+  Antgeo:         { count: 10, collectionId: 18 },
 };
-const CONTRACT_ADDRESS = '0xcD9e480b7A66128eDf5f935810681CbD6E8461f0';
-const MONAD_CHAIN_ID = 10143n;
 
+const CONTRACT_ADDRESS = '0xcD9e480b7A66128eDf5f935810681CbD6E8461f0';
+const MONAD_CHAIN_ID   = 10143n;
+
+/* ─────────── utils ─────────── */
 function shuffleArray(arr) {
   const a = [...arr];
   for (let i = a.length - 1; i > 0; i--) {
@@ -42,33 +40,38 @@ function shuffleArray(arr) {
 
 export default function Feed() {
   const { address } = useContext(WalletContext);
-  const [likesMap, setLikesMap] = useState({});
-  const [userLikes, setUserLikes] = useState([]);
-  const [commentsMap, setCommentsMap] = useState({});
-  const [openCommentId, setOpenCommentId] = useState(null);
-  const [inputText, setInputText] = useState('');
-  const [inputAuthor, setInputAuthor] = useState('');
-  const [mintingId, setMintingId] = useState(null);
 
-  // Prepare shuffled posts
+  const [likesMap,     setLikesMap]     = useState({});
+  const [userLikes,    setUserLikes]    = useState([]);
+  const [commentsMap,  setCommentsMap]  = useState({});
+  const [openCommentId,setOpenCommentId]= useState(null);
+  const [inputText,    setInputText]    = useState('');
+  const [inputAuthor,  setInputAuthor]  = useState('');
+  const [mintingId,    setMintingId]    = useState(null);
+
+  /* ─────────── 1. подготовка списка постов ─────────── */
   const posts = useMemo(() => {
-    const all = Object.entries(REGISTRY).flatMap(([authorId, { count, collectionId }]) =>
-      Array.from({ length: count }, (_, i) => ({
-        id: `${authorId}-${i}`,
-        authorId,
-        collectionId,
-        image: `/collections/${authorId}/art${i + 1}.png`,
-      }))
+    const all = Object.entries(REGISTRY).flatMap(
+      ([authorId, { count, collectionId }]) =>
+        Array.from({ length: count }, (_, i) => ({
+          id: `${authorId}-${i}`,
+          authorId,
+          collectionId,
+          image: `/collections/${authorId}/art${i + 1}.png`,
+        }))
     );
     return shuffleArray(all);
   }, []);
 
-  // Initial load of likes & comments
+  /* ─────────── 2. первичное получение лайков / комментариев ─────────── */
   useEffect(() => {
     supabase
       .from('likes')
       .select('post_id, likes')
-      .then(({ data }) => data && setLikesMap(Object.fromEntries(data.map(r => [r.post_id, r.likes]))));
+      .then(({ data }) =>
+        data && setLikesMap(Object.fromEntries(data.map(r => [r.post_id, r.likes])))
+      );
+
     if (address) {
       supabase
         .from('user_likes')
@@ -76,41 +79,47 @@ export default function Feed() {
         .eq('user_address', address)
         .then(({ data }) => data && setUserLikes(data.map(r => r.post_id)));
     }
+
     supabase
       .from('comments')
       .select('post_id, author, text, created_at')
       .order('created_at', { ascending: true })
       .then(({ data }) => {
         if (data) {
-          const grouped = data.reduce((acc, c) => { (acc[c.post_id] ||= []).push(c); return acc; }, {});
+          const grouped = data.reduce((acc, c) => {
+            (acc[c.post_id] ||= []).push(c);
+            return acc;
+          }, {});
           setCommentsMap(grouped);
         }
       });
   }, [address]);
 
-  // Like handler
+  /* ─────────── 3. обработка лайка ─────────── */
   const handleLike = async (postId) => {
     if (!address || userLikes.includes(postId)) return;
+
     await supabase.from('user_likes').insert([{ post_id: postId, user_address: address }]);
     await supabase.rpc('increment_post_like', { post_input: postId });
+
     setUserLikes(prev => [...prev, postId]);
     setLikesMap(prev => ({ ...prev, [postId]: (prev[postId] || 0) + 1 }));
   };
 
-  // Submit comment (with immediate UI update)
+  /* ─────────── 4. отправка комментария ─────────── */
   const handleCommentSubmit = async () => {
     const postId = openCommentId;
     const author = inputAuthor.trim();
-    const text = inputText.trim();
+    const text   = inputText.trim();
     if (!author || !text) return;
-    const { data, error } = await supabase
+
+    const { error } = await supabase
       .from('comments')
       .insert([{ post_id: postId, author, text }]);
+
     if (!error) {
-      // Clear inputs
       setInputAuthor('');
       setInputText('');
-      // Refetch this post's comments
       const { data: fresh } = await supabase
         .from('comments')
         .select('post_id, author, text, created_at')
@@ -120,35 +129,45 @@ export default function Feed() {
     }
   };
 
-  // Mint handler
-  const handleMint = useCallback(async (post) => {
-    if (mintingId) return;
-    if (!address) return alert('Connect wallet');
-    if (!window.ethereum) return alert('Install MetaMask');
-    try {
-      const provider = new ethers.BrowserProvider(window.ethereum);
-      await provider.send('eth_requestAccounts', []);
-      const net = await provider.getNetwork();
-      if (net.chainId !== MONAD_CHAIN_ID) {
-        await window.ethereum.request({
-          method: 'wallet_switchEthereumChain',
-          params: [{ chainId: `0x${MONAD_CHAIN_ID.toString(16)}` }],
-        });
-      }
-      const signer = await provider.getSigner();
-      const ctr = new ethers.Contract(CONTRACT_ADDRESS, contractABI.abi, signer);
-      const tx = await ctr.mint(post.collectionId, { value: ethers.parseEther('0.1') });
-      setMintingId(post.id);
-      await tx.wait();
-      alert('Mint successful!');
-    } catch (e) {
-      console.error(e);
-      alert(e?.message || 'Mint failed');
-    } finally {
-      setMintingId(null);
-    }
-  }, [address, mintingId]);
+  /* ─────────── 5. минт ─────────── */
+  const handleMint = useCallback(
+    async (post) => {
+      if (mintingId) return;
+      if (!address)       return alert('Connect wallet');
+      if (!window.ethereum) return alert('Install MetaMask');
 
+      try {
+        const provider = new ethers.BrowserProvider(window.ethereum);
+        await provider.send('eth_requestAccounts', []);
+
+        const net = await provider.getNetwork();
+        if (net.chainId !== MONAD_CHAIN_ID) {
+          await window.ethereum.request({
+            method: 'wallet_switchEthereumChain',
+            params: [{ chainId: `0x${MONAD_CHAIN_ID.toString(16)}` }],
+          });
+        }
+
+        const signer = await provider.getSigner();
+        const ctr    = new ethers.Contract(CONTRACT_ADDRESS, contractABI.abi, signer);
+        const tx     = await ctr.mint(post.collectionId, {
+          value: ethers.parseEther('0.1'),
+        });
+
+        setMintingId(post.id);
+        await tx.wait();
+        alert('Mint successful!');
+      } catch (e) {
+        console.error(e);
+        alert(e?.message || 'Mint failed');
+      } finally {
+        setMintingId(null);
+      }
+    },
+    [address, mintingId]
+  );
+
+  /* ─────────── 6. UI ─────────── */
   return (
     <div className="wrapper">
       {!address && <div className="banner">Connect wallet to like, comment & mint</div>}
@@ -174,12 +193,14 @@ export default function Feed() {
                 <FiHeart size={24} />
                 <span className="count">{likesMap[post.id] || 0}</span>
               </button>
+
               <button
                 className="iconBtn"
                 onClick={() => setOpenCommentId(post.id)}
               >
                 <FiMessageSquare size={24} />
               </button>
+
               <button
                 className="iconBtn"
                 onClick={() => handleMint(post)}
@@ -192,7 +213,7 @@ export default function Feed() {
         ))}
       </div>
 
-      {/* Sidebar for comments */}
+      {/* ─────────── боковая панель комментариев ─────────── */}
       {openCommentId && (
         <div className="commentSidebar">
           <div className="sidebarHeader">

@@ -1,44 +1,41 @@
-// pages/collections/[authorId].js
+// pages/collections/[authorId].js  – v2 (fix chain-switch & sold-out counter)
+
 import { useRouter } from 'next/router';
 import {
-  useContext,
-  useState,
-  useEffect,
-  useCallback,
-  useMemo,
+  useContext, useState,
+  useEffect, useCallback,
+  useMemo
 } from 'react';
 import { motion } from 'framer-motion';
 import { ethers } from 'ethers';
-import contractJSON from '@/src/abi/MVB.json';
+import { gql } from 'graphql-request';
+import { graphClient } from '../../lib/client';
+import contractJSON from '../../src/abi/MVB.json';
 import { WalletContext } from '../_app';
 
-const RPC = 'https://testnet-rpc.monad.xyz';
-const CHAIN_ID_DEC = 10143;
-const CHAIN_ID_HEX = '0x279f';
-const CONTRACT = '0xcD9e480b7A66128eDf5f935810681CbD6E8461f0';
-const MAX_SUPPLY = 100;
-const IPFS_GATEWAY = 'https://gateway.pinata.cloud/ipfs';
+const CHAIN_ID_DEC  = 10143;
+const CHAIN_ID_HEX  = '0x279f';
+const RPC_URL       = 'https://testnet-rpc.monad.xyz';
+const CONTRACT      = '0xcD9e480b7A66128eDf5f935810681CbD6E8461f0';
+const MAX_SUPPLY    = 100;
+const IPFS_GATEWAY  = 'https://gateway.pinata.cloud/ipfs';
 
-/** Автор → { count, cid, collectionId } */
+/** Автор → { count, cid, collectionId, link } */
 export const REGISTRY = {
-  twistzz:        { count: 12, cid: 'bafybeif2hdabepr5je2vblwi6iivwhzne3rwmql7qhwgcn3cwhpgqqzyv4', collectionId: 2 },
-  tchan4323:      { count: 10, cid: 'bafybeiff2kxd43msni7hwzycq26b45ned5b5yeuzb5xz4gfiw7jp7ma3xq', collectionId: 3 },
-  solncestoyanie: { count: 10, cid: 'bafybeidnib5rcvipty6hy4p6wwvrc7ul37wz7alsdlebvefbh7fpjkfmce', collectionId: 4 },
-  Richard:        { count: 10, cid: 'bafybeiao64ba6ipurjijmga6e4hyrlsmki2bkkqxqxhx7j6uturpjpts3m', collectionId: 5 },
-  N1nja:          { count: 10, cid: 'bafybeihmw4h43usdknxf35jhhybusws4m3fnzykekkwnm727bocfkzvdiy', collectionId: 6 },
-  miss_port:      { count: 10, cid: 'bafybeianlconikn7cv6ywphrewlbjfpvvj7uxi4sjwlryu7p22v7dvg4re', collectionId: 7 },
-  lzlzlz:         { count: 10, cid: 'bafybeidb3kcti7jkbv33pgqpci5l3hd7usgjlxhdzvpvktn7ha7avurp7e', collectionId: 8 },
-  kasyak:         { count: 10, cid: 'bafybeidp6q3qkg5e3sdxrpmkwqjt3zu6m5qs2kioeeq336g7gxvqdtwjuu', collectionId: 9 },
-  Ishan:          { count: 10, cid: 'bafybeibspj7jah6wikgfmgxc5bmcxvxtgycqepf4zzx75c7mdp4p6vojne', collectionId: 10 },
-  ghooolyache:    { count: 10, cid: 'bafybeicgcphm5r3zoogtod5teypm7olodg5akpvre534edjtixex27wyha', collectionId: 11 },
-  gabriel:        { count: 10, cid: 'bafybeidx3u73jxyik5wcuyvxx24xbmpyqqi35yblytcapttlmupoc23pju', collectionId: 12 },
-  Dohobob:        { count: 10, cid: 'bafybeieaxng266fbs4s4sdaazuf7czhmat4i6skyudx2d44xnrclbgbai4', collectionId: 13 },
-  DayzZzer:       { count: 10, cid: 'bafybeico6ircxzelf3gsd6wd22hl3gasuclosh5mkkb2eauhko3uqh7hxa', collectionId: 14 },
-  bromaxo:        { count: 10, cid: 'bafybeidkhpcpckelugdjluv4tsnlj7edcb64j2kkm3dbdjakwaz3mp275u', collectionId: 16 },
-  Avader:         { count: 10, cid: 'bafybeiazcrjfw45voghatj2kj2ipaic6xomygt5ai3x5k4xpron4vwarte', collectionId: 17 },
-  Antgeo:         { count: 10, cid: 'bafybeibylnlnfj7eip4m4l5tskyjzv2xjf7jr4wocjrapeskyph4ybakzq', collectionId: 18 },
-  AnnaD:          { count: 10, cid: 'bafybeiclgdzyjazcsgiln6k3uhcxmjy3jjk2cvd7eodawg74t6oihky35m', collectionId: 19 },
-  Akela:          { count: 10, cid: 'bafybeibptnkdylcdixqtoud5byiu35uma4z2vsqnih7z7m6ds6sj7lqgpi', collectionId: 20 },
+  twistzz:        { count: 12, cid: 'bafybeif2hdabepr5je2vblwi6iivwhzne3rwmql7qhwgcn3cwhpgqqzyv4', collectionId: 2,  link: 'https://x.com/twistzz_eth?s=21' },
+  tchan4323:      { count: 10, cid: 'bafybeiff2kxd43msni7hwzycq26b45ned5b5yeuzb5xz4gfiw7jp7ma3xq', collectionId: 3,  link: 'https://x.com/TChamp234?s=09' },
+  solncestoyanie: { count: 10, cid: 'bafybeidnib5rcvipty6hy4p6wwvrc7ul37wz7alsdlebvefbh7fpjkfmce', collectionId: 4,  link: 'https://x.com/solncestoyaniee' },
+  Richard:        { count: 10, cid: 'bafybeiao64ba6ipurjijmga6e4hyrlsmki2bkkqxqxhx7j6uturpjpts3m', collectionId: 5,  link: 'https://x.com/starb0ba_fett?s=21' },
+  miss_port:      { count: 10, cid: 'bafybeianlconikn7cv6ywphrewlbjfpvvj7uxi4sjwlryu7p22v7dvg4re', collectionId: 7,  link: 'https://x.com/kicklee89?s=21' },
+  lzlzlz:         { count: 10, cid: 'bafybeidb3kcti7jkbv33pgqpci5l3hd7usgjlxhdzvpvktn7ha7avurp7e', collectionId: 8,  link: 'https://twitter.com/velicko_aleksej' },
+  kasyak:         { count: 10, cid: 'bafybeidp6q3qkg5e3sdxrpmkwqjt3zu6m5qs2kioeeq336g7gxvqdtwjuu', collectionId: 9,  link: 'https://x.com/kasyak0?s=21' },
+  Ishan:          { count: 10, cid: 'bafybeibspj7jah6wikgfmgxc5bmcxvxtgycqepf4zzx75c7mdp4p6vojne', collectionId: 10, link: 'https://x.com/ihsan00333?s=21' },
+  ghooolyache:    { count: 10, cid: 'bafybeicgcphm5r3zoogtod5teypm7olodg5akpvre534edjtixex27wyha', collectionId: 11, link: 'https://x.com/ghooolyache' },
+  gabriel:        { count: 10, cid: 'bafybeidx3u73jxyik5wcuyvxx24xbmpyqqi35yblytcapttlmupoc23pju', collectionId: 12, link: 'https://x.com/sekret_off' },
+  Dohobob:        { count: 10, cid: 'bafybeieaxng266fbs4s4sdaazuf7czhmat4i6skyudx2d44xnrclbgbai4', collectionId: 13, link: 'https://x.com/dohobobmonad?s=21' },
+  DayzZzer:       { count: 10, cid: 'bafybeico6ircxzelf3gsd6wd22hl3gasuclosh5mkkb2eauhko3uqh7hxa', collectionId: 14, link: 'https://x.com/dayzer__?s=21' },
+  bromaxo:        { count: 10, cid: 'bafybeidkhpcpckelugdjluv4tsnlj7edcb64j2kkm3dbdjakwaz3mp275u', collectionId: 16, link: 'https://x.com/bro_maxo' },
+  Antgeo:         { count: 10, cid: 'bafybeibylnlnfj7eip4m4l5tskyjzv2xjf7jr4wocjrapeskyph4ybakzq', collectionId: 18, link: 'https://x.com/antgeo13?s=21' },
 };
 
 const DEFAULT_PHRASES = [
@@ -49,66 +46,118 @@ const DEFAULT_PHRASES = [
   'Colors of imagination!',
 ];
 
+const GET_COLLECTION = gql`
+  query GetCollection($id: ID!) {
+    collection(id: $id) {
+      currentSupply
+    }
+  }
+`;
+
 export default function AuthorPage() {
   const { query, isReady } = useRouter();
   const authorId = query.authorId;
   const { address, setAddress } = useContext(WalletContext);
 
-  const [provider, setProvider]       = useState(null);
-  const [currentArt, setCurrentArt]   = useState('');
-  const [phrase, setPhrase]           = useState('');
-  const [isMinting, setIsMinting]     = useState(false);
-  const [mintStatus, setMintStatus]   = useState(null);
-  const [currentSupply, setCurrentSupply] = useState(0);
+  const [provider, setProvider]     = useState(null);
+  const [currentArt, setCurrentArt] = useState('');
+  const [phrase, setPhrase]         = useState('');
+  const [isMinting, setIsMinting]   = useState(false);
+  const [mintStatus, setMintStatus] = useState(null);
 
-  // 1. Provider
+  const [currentSupply, setCurrentSupply] = useState(null);
+  const [supplyError, setSupplyError]     = useState(null);
+
+  /* 1) создаём ethers provider */
   useEffect(() => {
     if (typeof window !== 'undefined' && window.ethereum) {
       setProvider(new ethers.BrowserProvider(window.ethereum));
     }
   }, []);
 
-  // 2. Meta
+  /* 2) meta по authorId */
   const meta = useMemo(() => {
     if (!isReady || !authorId) return null;
     const cfg = REGISTRY[authorId];
     if (!cfg) return null;
-
     return {
       artworks: Array.from({ length: cfg.count },
-        (_, i) => `${IPFS_GATEWAY}/${cfg.cid}/art${i + 1}.png`),
+        (_, i) => `${IPFS_GATEWAY}/${cfg.cid}/art${i + 1}.png`
+      ),
       phrases:      DEFAULT_PHRASES,
       collectionId: cfg.collectionId,
+      link:         cfg.link ?? null,
     };
   }, [isReady, authorId]);
 
-  // 3. Supply
+  /* 3) подгружаем currentSupply */
   useEffect(() => {
-    if (!provider || !meta) return;
-    const ctr = new ethers.Contract(CONTRACT, contractJSON.abi, provider);
-    ctr.collections(meta.collectionId)
-       .then((c) => setCurrentSupply(Number(c.currentSupply)))
-       .catch(() => {});
-  }, [provider, meta]);
+    if (!meta) return;
+    setSupplyError(null);
+    setCurrentSupply(null);
 
-  // 4. Random art
+    graphClient
+      .request(GET_COLLECTION, { id: String(meta.collectionId) })
+      .then(res => setCurrentSupply(Number(res.collection.currentSupply)))
+      .catch(err => {
+        console.error(err);
+        setSupplyError(err.message);
+      });
+  }, [meta]);
+
+  /* 4) рандом арт + фраза */
   const pickRandom = useCallback(() => {
     if (!meta) return;
     const i = Math.floor(Math.random() * meta.artworks.length);
     setCurrentArt(meta.artworks[i]);
-    setPhrase(meta.phrases[Math.floor(Math.random() * meta.phrases.length)]);
+    setPhrase(
+      meta.phrases[Math.floor(Math.random() * meta.phrases.length)]
+    );
   }, [meta]);
 
-  useEffect(() => { if (meta) pickRandom(); }, [meta]);
+  useEffect(() => { if (meta) pickRandom(); }, [meta, pickRandom]);
 
-  // 5. Connect wallet
+  /* 5) подключаем кошелёк */
   const connectWallet = useCallback(async () => {
     if (!window.ethereum) return alert('Please install MetaMask');
-    const accs = await window.ethereum.request({ method: 'eth_requestAccounts' });
-    setAddress(accs[0]);
+    const [acc] = await window.ethereum.request({
+      method: 'eth_requestAccounts'
+    });
+    setAddress(acc);
   }, [setAddress]);
 
-  // 6. Mint
+  /* helper: ensure Monad Testnet */
+  const ensureMonadTestnet = async () => {
+    try {
+      /* пытаемся сразу переключиться */
+      await window.ethereum.request({
+        method: 'wallet_switchEthereumChain',
+        params: [{ chainId: CHAIN_ID_HEX }],
+      });
+    } catch (switchError) {
+      /* 4902 — сеть ещё не добавлена */
+      if (switchError.code === 4902) {
+        await window.ethereum.request({
+          method: 'wallet_addEthereumChain',
+          params: [{
+            chainId: CHAIN_ID_HEX,
+            chainName: 'Monad Testnet',
+            rpcUrls: [RPC_URL],
+            nativeCurrency: { name: 'Monad', symbol: 'MDA', decimals: 18 },
+            blockExplorerUrls: ['https://testnet.monadexplorer.com'],
+          }],
+        });
+        await window.ethereum.request({
+          method: 'wallet_switchEthereumChain',
+          params: [{ chainId: CHAIN_ID_HEX }],
+        });
+      } else {
+        throw switchError;
+      }
+    }
+  };
+
+  /* 6) Mint NFT */
   const mintNFT = useCallback(async () => {
     if (!provider) return alert('MetaMask not found');
     if (!address)  return alert('Connect wallet first');
@@ -116,40 +165,46 @@ export default function AuthorPage() {
 
     setIsMinting(true);
     setMintStatus(null);
+
     try {
-      const net = await provider.getNetwork();
-      if (net.chainId !== CHAIN_ID_DEC) {
-        await window.ethereum.request({
-          method: 'wallet_switchEthereumChain',
-          params: [{ chainId: CHAIN_ID_HEX }],
-        });
-      }
+      await ensureMonadTestnet();
 
       const signer = await provider.getSigner();
       const ctr    = new ethers.Contract(CONTRACT, contractJSON.abi, signer);
-      const tx     = await ctr.mint(meta.collectionId, {
+
+      const tx = await ctr.mint(meta.collectionId, {
         value: ethers.parseEther('0.1'),
       });
-
       setMintStatus({ status: 'pending', tx: tx.hash });
       await tx.wait();
 
-      const c = await ctr.collections(meta.collectionId);
-      setCurrentSupply(Number(c.currentSupply));
+      const res = await graphClient.request(
+        GET_COLLECTION, { id: String(meta.collectionId) }
+      );
+      setCurrentSupply(Number(res.collection.currentSupply));
+
       setMintStatus({ status: 'success', tx: tx.hash });
     } catch (e) {
+      console.error(e);
       const reason = e?.reason || e?.message || '';
-      if (e.code === -32002) alert('Please check MetaMask — pending request');
+      if (e.code === -32002) {
+        alert('Please check MetaMask — pending request');
+      }
       setMintStatus({ status: 'error', msg: reason });
     } finally {
       setIsMinting(false);
     }
   }, [provider, address, meta]);
 
-  if (!isReady) return <p>Loading…</p>;
-  if (!meta)    return (
-    <p style={{ textAlign: 'center', marginTop: '4rem' }}>Author not found</p>
-  );
+  /* 7) Рендер */
+  if (!meta) {
+    return isReady
+      ? <p style={{ textAlign:'center', marginTop:'4rem' }}>Author not found</p>
+      : <p>Loading…</p>;
+  }
+
+  const remaining = currentSupply !== null ? MAX_SUPPLY - currentSupply : null;
+  const soldOut   = remaining === 0;
 
   return (
     <div className="container">
@@ -159,36 +214,37 @@ export default function AuthorPage() {
         </button>
       )}
 
-      <h1 className="title">{authorId}</h1>
+      <h1 className="title gradientText">{authorId}</h1>
 
       <section className="aboutAuthor">
-        <h2>About the author</h2>
-        <p>
-          This talented creator makes unique NFTs on the Monad platform.
-          Support their art!
-        </p>
+        <h2>Support the artist</h2>
+        <p>Show some love on Monad Testnet!</p>
       </section>
 
-      <div className="imageBlock">
-        {currentArt && (
-          <img src={currentArt} className="artImage" alt="Artwork" />
-        )}
+      <div className="imageCard">
+        <img src={currentArt} className="artImage" alt="Artwork" />
       </div>
 
       <p className="phrase">{phrase}</p>
+
       <p className="supply">
-        Minted <strong>{currentSupply}</strong> / {MAX_SUPPLY}
+        Minted&nbsp;<strong>{supplyError ? 'Error' : (currentSupply ?? '…')}</strong>&nbsp;/ {MAX_SUPPLY}
       </p>
+      {remaining !== null && (
+        <p className="remaining">
+          {soldOut ? 'Sold out 🎉' : `Remaining ${remaining}`}
+        </p>
+      )}
 
       <div className="btnRow">
         <motion.button
           className="btn mintBtn"
           onClick={mintNFT}
-          disabled={isMinting || !address}
+          disabled={isMinting || !address || soldOut}
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
         >
-          {isMinting ? 'Minting…' : 'Mint'}
+          {soldOut ? 'Sold out' : (isMinting ? 'Minting…' : 'Mint')}
         </motion.button>
 
         <motion.button
@@ -199,17 +255,19 @@ export default function AuthorPage() {
         >
           Next
         </motion.button>
-      </div>
 
-      <div className="followRow">
-        <a
-          href="https://x.com/twistzz_eth"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="btn followBtn"
-        >
-          Follow on Twitter
-        </a>
+        {meta.link && (
+          <motion.a
+            href={meta.link}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn followBtn"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            Follow
+          </motion.a>
+        )}
       </div>
 
       {mintStatus?.status === 'pending' && (
@@ -233,107 +291,65 @@ export default function AuthorPage() {
 
       <style jsx>{`
         .container {
-          max-width: 600px;
-          margin: 3rem auto;
+          max-width: 480px;
+          margin: 2rem auto;
           padding: 1rem;
           text-align: center;
           font-family: 'Lato', sans-serif;
         }
-        .btn {
-          cursor: pointer;
-          border: none;
-          border-radius: 12px;
-          font-weight: 700;
-          transition: transform 0.2s, box-shadow 0.2s;
-        }
-        .connectBtn {
-          margin-bottom: 1rem;
-          padding: 0.6rem 1.2rem;
-          background: linear-gradient(45deg, #8e44ad, #c39bd3);
-          color: #fff;
-        }
-        .title {
-          font-size: 2.25rem;
-          margin-bottom: 1rem;
-          background: linear-gradient(90deg, #8e44ad, #c39bd3);
+        .gradientText {
+          background: linear-gradient(45deg,#8e44ad,#3498db);
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
         }
-        .aboutAuthor {
-          margin-bottom: 1.5rem;
-        }
         .aboutAuthor h2 {
-          font-size: 1.5rem;
-          margin-bottom: 0.5rem;
+          margin-bottom: 0.25rem;
         }
-        .aboutAuthor p {
-          color: #555;
-        }
-        .imageBlock {
-          background: #fff;
+        .imageCard {
+          margin: 0 auto 1rem;
+          max-width: 360px;
           border-radius: 16px;
-          padding: 1rem;
-          box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
-          margin-bottom: 1rem;
+          box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+          overflow: hidden;
         }
         .artImage {
           width: 100%;
-          border-radius: 12px;
-        }
-        .phrase {
-          margin: 0.75rem 0 0.25rem;
-          color: #555;
-          font-size: 1.1rem;
-        }
-        .supply {
-          margin: 0.25rem 0 1rem;
-          font-weight: bold;
-          color: #333;
+          height: auto;
+          display: block;
         }
         .btnRow {
           display: flex;
+          flex-wrap: wrap;
           justify-content: center;
-          gap: 1.2rem;
-          margin-bottom: 1.2rem;
+          gap: 0.75rem;
+          margin: 1.25rem 0;
         }
-        .mintBtn,
-        .nextBtn {
-          padding: 0.75rem 1.5rem;
-          background: linear-gradient(45deg, #8e44ad, #c39bd3);
+        .btn {
+          padding: 0.75rem 1.6rem;
+          border: none;
+          border-radius: 10px;
+          font-weight: 600;
+          cursor: pointer;
+          background: linear-gradient(45deg,#8e44ad,#c39bd3);
           color: #fff;
-          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+          transition: transform 0.2s, box-shadow 0.2s;
         }
-        .mintBtn:disabled,
-        .nextBtn:disabled {
+        .followBtn {
+          background: linear-gradient(45deg,#1da1f2,#0d8de1);
+        }
+        .btn:disabled {
           opacity: 0.6;
           cursor: not-allowed;
         }
-        .mintBtn:hover:not(:disabled),
-        .nextBtn:hover:not(:disabled) {
-          transform: scale(1.05);
-          box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+        .btn:hover {
+          box-shadow: 0 6px 22px rgba(0,0,0,0.18);
         }
-        .followRow {
-          margin-bottom: 1.5rem;
-        }
-        .followBtn {
-          padding: 0.6rem 1.2rem;
-          background: linear-gradient(45deg, #8e44ad, #c39bd3);
-          color: #fff;
-          text-decoration: none;
-        }
-        .pending {
-          color: #d35400;
-          margin-top: 0.5rem;
-        }
-        .success {
-          color: #27ae60;
-          margin-top: 0.5rem;
-        }
-        .error {
-          color: #c0392b;
-          margin-top: 0.5rem;
-        }
+        .phrase { font-style: italic; color: #555; margin-bottom: 0.5rem; }
+        .supply { margin: .5rem 0; font-weight: bold; }
+        .remaining { margin-top: -0.25rem; color: #777; font-size: 0.9rem; }
+        .pending { color: #d35400; }
+        .success { color: #27ae60; }
+        .error   { color: #c0392b; }
       `}</style>
     </div>
   );

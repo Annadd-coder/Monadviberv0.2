@@ -1,6 +1,9 @@
-/** @type {import('next').NextConfig} */
-const nextConfig = {
-  reactStrictMode: true,
+/** next.config.mjs — ESM */
+export default {
+  images: {
+    remotePatterns: [
+      { protocol: 'https', hostname: 'gateway.pinata.cloud' },
+      { protocol: 'https', hostname: '*.ipfs.dweb.link' },
+    ],
+  },
 };
-
-export default nextConfig;

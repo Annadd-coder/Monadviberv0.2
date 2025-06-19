@@ -1,154 +1,152 @@
-// pages/Profile.js – clean investor‑friendly cabinet (NFT gallery, no auction)
 import { useRouter } from 'next/router';
-import { useEffect, useState, useContext, useCallback } from 'react';
-import { ethers } from 'ethers';
-import { WalletContext } from './_app';
-import contractABI from '../src/abi/MVB.json';
+import { useEffect, useState, useContext } from 'react';
+import Link from 'next/link';
+import toast from 'react-hot-toast';
 
-const CONTRACT_ADDRESS = '0xcD9e480b7A66128eDf5f935810681CbD6E8461f0';
-const MONAD_CHAIN_ID = 10143n; // BigInt
+import { supabase } from '../lib/supabaseClient';
+import { WalletContext } from './_app';
 
 export default function Profile() {
-  const router = useRouter();
-  const { address: contextAddr } = useContext(WalletContext);
+  const router               = useRouter();
+  const { address: ctxAddr } = useContext(WalletContext);
 
-  /*  Core state  */
-  const [profileAddress, setProfileAddress] = useState(null);
-  const [nfts, setNfts] = useState([]);
+  const [wallet, setWallet]   = useState(null);
+  const [moaps,  setMoaps]    = useState([]);
+  const [collections, setColl]= useState(0);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [tab, setTab]         = useState('moaps');
 
-  /* ----------------------------------- */
-  /*   Determine which address to show   */
-  /* ----------------------------------- */
+  /* detect wallet */
   useEffect(() => {
-    const addr = router.query.address || contextAddr || null;
-    setProfileAddress(addr);
-  }, [router.query.address, contextAddr]);
+    const w = (router.query.address || ctxAddr || '').toString();
+    setWallet(w || null);
+  }, [router.query.address, ctxAddr]);
 
-  /* ----------------------------------- */
-  /*    Ensure MetaMask & right network   */
-  /* ----------------------------------- */
-  const getProviderOnMonad = useCallback(async () => {
-    if (typeof window === 'undefined' || !window.ethereum) throw new Error('MetaMask not found');
-    const provider = new ethers.BrowserProvider(window.ethereum);
-    const net = await provider.getNetwork();
-    if (net.chainId !== MONAD_CHAIN_ID) {
-      await window.ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: `0x${MONAD_CHAIN_ID.toString(16)}` }] });
-    }
-    return provider;
+  /* fetch MOAPs */
+  useEffect(() => {
+    if (!wallet) return;
+    setLoading(true);
+    (async () => {
+      try {
+        const { data: claims, error } = await supabase
+          .from('moap_claims')
+          .select('moap_id')
+          .ilike('wallet', wallet);
+        if (error) throw error;
+
+        const ids = claims.map(r => r.moap_id);
+        if (!ids.length) { setMoaps([]); return; }
+
+        const { data, error: err2 } = await supabase
+          .from('moaps')
+          .select('id, description, image_url')
+          .in('id', ids);
+        if (err2) throw err2;
+
+        setMoaps(data.map(m => ({
+          id: m.id,
+          description: m.description || `MOAP #${m.id}`,
+          image: m.image_url || '/placeholder.png',
+        })));
+      } catch (e) {
+        toast.error(`MOAP load failed: ${e.message ?? e}`);
+      } finally { setLoading(false); }
+    })();
+  }, [wallet]);
+
+  /* total collections */
+  useEffect(() => {
+    (async () => {
+      const { count } = await supabase
+        .from('collections')
+        .select('*', { head:true, count:'exact' });
+      setColl(count || 0);
+    })();
   }, []);
 
-  /* ----------------------------------- */
-  /*            Fetch user NFTs           */
-  /* ----------------------------------- */
-  const fetchNFTs = useCallback(async () => {
-    if (!profileAddress) return;
-    try {
-      setLoading(true);
-      setError(null);
-      const provider = await getProviderOnMonad();
-      const contract = new ethers.Contract(CONTRACT_ADDRESS, contractABI.abi, provider);
+  if (!wallet) return <Center>Connect wallet to view dashboard.</Center>;
 
-      const bal = await contract.balanceOf(profileAddress);
-      const total = Number(bal);
-      if (!total) return setNfts([]);
+  /* share url */
+  const shareUrl = (it) => {
+    const origin = typeof window !== 'undefined' ? window.location.origin : process.env.NEXT_PUBLIC_SITE_URL || '';
+    const txt = `Just claimed a MOAP for the \"${it.description}\" event on MonadViber pre-test!`;
+    return `https://twitter.com/intent/tweet?text=${encodeURIComponent(txt)}&url=${encodeURIComponent(`${origin}/share/moap/${it.id}`)}`;
+  };
 
-      // robustly fetch tokenIds even if enumeration glitches
-      const tokenIds = [];
-      for (let i = 0; i < total; i++) {
-        try {
-          const tid = await contract.tokenOfOwnerByIndex(profileAddress, i);
-          tokenIds.push(tid);
-        } catch (e) {
-          // Occasionally index > balance due to race‑condition → stop
-          console.warn('tokenOfOwnerByIndex revert at', i, e.reason || e);
-          break;
-        }
-      }
-
-      const meta = await Promise.all(tokenIds.map(async (tid) => {
-        try {
-          let uri = await contract.tokenURI(tid);
-          if (uri.startsWith('ipfs://')) uri = uri.replace('ipfs://', 'https://gateway.pinata.cloud/ipfs/');
-          const res = await fetch(uri);
-          if (!res.ok) throw new Error('meta fetch fail');
-          const json = await res.json();
-          let img = json.image || '';
-          if (img.startsWith('ipfs://')) img = img.replace('ipfs://', 'https://gateway.pinata.cloud/ipfs/');
-          return { tokenId: Number(tid), name: json.name ?? `NFT #${tid}`, description: json.description ?? '', image: img };
-        } catch (e) { console.error(e); return null; }
-      }));
-
-      setNfts(meta.filter(Boolean));
-    } catch (e) {
-      console.error(e);
-      setError(e.message);
-    } finally { setLoading(false); }
-  }, [profileAddress, getProviderOnMonad]);
-
-  /* initial fetch */
-  useEffect(() => { fetchNFTs(); }, [fetchNFTs]);
-
-  if (!profileAddress) {
-    return (
-      <div className="wrapper"><p className="info">Connect wallet to view your profile.</p></div>
-    );
-  }
-
+  /* ---------------- render ---------------- */
   return (
-    <div className="wrapper">
-      <div className="hero">
-        <h1>Welcome to your Collection</h1>
-        <p className="addr">{profileAddress}</p>
-        <p className="sub">Total NFTs minted: <strong>{nfts.length}</strong></p>
-      </div>
+    <div className="wrap">
+      <h1 className="h1">My Dashboard</h1>
 
-      {/* NFT grid */}
-      <section className="gallery">
-        {loading ? <p className="info">Loading…</p> : error ? <p className="error">{error}</p> : nfts.length === 0 ? <p className="info">You don’t own any NFTs yet.</p> : (
-          <div className="grid">
-            {nfts.map((nft) => (
-              <figure key={nft.tokenId} className="card">
-                <img src={nft.image} alt={nft.name} />
-                <figcaption>
-                  <span>{nft.name}</span>
-                  <small>#{nft.tokenId}</small>
-                </figcaption>
-              </figure>
-            ))}
-          </div>
-        )}
+      <section className="stats">
+        <Stat num={moaps.length} label="MOAPs" />
+        <Stat num={0}            label="NFTs"  />
+        <Stat num={collections}  label="Collections" />
       </section>
 
+      <div className="tabs">
+        {['moaps','nfts','quests'].map(t=>(
+          <button key={t} onClick={()=>setTab(t)} className={tab===t?'act':''}>{t.toUpperCase()}</button>
+        ))}
+      </div>
+
+      {loading && <p className="info">Loading…</p>}
+      {tab==='moaps' && !loading && (
+        moaps.length ? <Grid list={moaps} build={shareUrl}/> : <p className="info">No MOAPs yet.</p>
+      )}
+      {tab==='nfts'   && <p className="info">NFT section coming soon</p>}
+      {tab==='quests' && <p className="info">Quest system coming soon</p>}
+
       <style jsx>{`
-        .wrapper{
-          min-height:100vh; padding:80px 24px 60px; background:linear-gradient(135deg,#ECE1F9 0%,#F8F4FD 100%);
-          color:#4A148C; font-family:"Poppins",sans-serif;
-        }
-        .hero{ text-align:center; margin-bottom:40px; }
-        .hero h1{ font-size:2.6rem; margin:0; }
-        .addr{ font-family:monospace; font-size:0.95rem; opacity:.8; }
-        .sub{ margin-top:8px; font-weight:500; }
-
-        .gallery{ max-width:1100px; margin:0 auto; }
-        .grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:24px; }
-
-        .card{ background:#fff; border-radius:16px; overflow:hidden; box-shadow:0 6px 28px rgba(0,0,0,.12); transition:transform .25s; }
-        .card:hover{ transform:translateY(-4px); }
-        .card img{ width:100%; height:260px; object-fit:cover; }
-        figcaption{ padding:12px 16px; display:flex; justify-content:space-between; align-items:center; }
-        figcaption span{ font-weight:600; }
-        figcaption small{ color:#8E24AA; }
-
-        .info{ text-align:center; font-style:italic; }
-        .error{ text-align:center; color:#D50000; }
-
-        @media(max-width:768px){
-          .hero h1{ font-size:2rem; }
-          .card img{ height:200px; }
-        }
+        .wrap{min-height:100vh;padding:60px 20px;background:linear-gradient(135deg,#f8f4ff,#e1bee7);font-family:Lato,sans-serif;}
+        .h1{text-align:center;font-size:2.6rem;font-weight:700;color:#6a1b9a;margin-bottom:2rem;}
+        .stats{display:flex;justify-content:center;gap:2.5rem;margin-bottom:1rem;flex-wrap:wrap;}
+        .tabs{display:flex;justify-content:center;gap:1rem;margin-bottom:1.4rem;flex-wrap:wrap;}
+        .tabs button{padding:8px 18px;border:none;border-radius:8px;background:#eee;color:#555;font-weight:600;cursor:pointer;transition:.2s;}
+        .tabs button:hover{background:#ddd;}
+        .tabs .act{background:#6a1b9a;color:#fff;}
+        .info{text-align:center;color:#666;margin-top:1.4rem;}
       `}</style>
     </div>
   );
 }
+
+/* ---------- helpers ---------- */
+const Stat = ({ num,label }) => (
+  <div className="stat">
+    <strong>{num}</strong><span>{label}</span>
+    <style jsx>{`
+      .stat{text-align:center;}
+      strong{display:block;font-size:2.2rem;color:#333;}
+      span{font-size:0.9rem;color:#555;}
+    `}</style>
+  </div>
+);
+
+const Grid = ({ list, build }) => (
+  <>
+    <div className="grid">
+      {list.map(it=>(
+        <div key={it.id} className="card">
+          <div className="circle"><img src={it.image} alt={it.description}/></div>
+          <p className="desc" title={it.description}>{it.description}</p>
+          <Link href={build(it)} target="_blank" className="btn">Share ↗</Link>
+        </div>
+      ))}
+    </div>
+    <style jsx>{`
+      .grid{display:flex;flex-wrap:wrap;justify-content:center;gap:46px;}
+      .card{width:200px;display:flex;flex-direction:column;align-items:center;}
+      .circle{width:160px;height:160px;border-radius:50%;overflow:hidden;box-shadow:0 6px 18px rgba(0,0,0,.12);transition:transform .2s;}
+      .card:hover .circle{transform:translateY(-4px);}
+      .circle img{width:100%;height:100%;object-fit:cover;}
+      .desc{margin:14px 0 10px;font-weight:600;color:#333;text-align:center;}
+      .btn{padding:10px 28px;border:none;border-radius:24px;background:linear-gradient(135deg,#7b1fa2,#b053d3);color:#fff;font-weight:700;text-decoration:none;transition:transform .2s,box-shadow .2s;}
+      .btn:hover{transform:translateY(-3px);box-shadow:0 8px 16px rgba(0,0,0,.18);}
+    `}</style>
+  </>
+);
+
+const Center = ({children}) => (
+  <div style={{minHeight:'100vh',display:'flex',alignItems:'center',justifyContent:'center',fontFamily:'Lato,sans-serif'}}>{children}</div>
+);

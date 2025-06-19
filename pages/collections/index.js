@@ -6,7 +6,6 @@ const AUTHORS = {
   tchan4323:      { cid: 'bafybeiff2kxd43msni7hwzycq26b45ned5b5yeuzb5xz4gfiw7jp7ma3xq' },
   solncestoyanie: { cid: 'bafybeidnib5rcvipty6hy4p6wwvrc7ul37wz7alsdlebvefbh7fpjkfmce' },
   Richard:        { cid: 'bafybeiao64ba6ipurjijmga6e4hyrlsmki2bkkqxqxhx7j6uturpjpts3m' },
-  N1nja:          { cid: 'bafybeihmw4h43usdknxf35jhhybusws4m3fnzykekkwnm727bocfkzvdiy' },
   miss_port:      { cid: 'bafybeianlconikn7cv6ywphrewlbjfpvvj7uxi4sjwlryu7p22v7dvg4re' },
   lzlzlz:         { cid: 'bafybeidb3kcti7jkbv33pgqpci5l3hd7usgjlxhdzvpvktn7ha7avurp7e' },
   kasyak:         { cid: 'bafybeidp6q3qkg5e3sdxrpmkwqjt3zu6m5qs2kioeeq336g7gxvqdtwjuu' },
@@ -16,10 +15,7 @@ const AUTHORS = {
   Dohobob:        { cid: 'bafybeieaxng266fbs4s4sdaazuf7czhmat4i6skyudx2d44xnrclbgbai4' },
   DayzZzer:       { cid: 'bafybeico6ircxzelf3gsd6wd22hl3gasuclosh5mkkb2eauhko3uqh7hxa' },
   bromaxo:        { cid: 'bafybeidkhpcpckelugdjluv4tsnlj7edcb64j2kkm3dbdjakwaz3mp275u' },
-  Avader:         { cid: 'bafybeiazcrjfw45voghatj2kj2ipaic6xomygt5ai3x5k4xpron4vwarte' },
   Antgeo:         { cid: 'bafybeibylnlnfj7eip4m4l5tskyjzv2xjf7jr4wocjrapeskyph4ybakzq' },
-  AnnaD:          { cid: 'bafybeiclgdzyjazcsgiln6k3uhcxmjy3jjk2cvd7eodawg74t6oihky35m' },
-  Akela:          { cid: 'bafybeibptnkdylcdixqtoud5byiu35uma4z2vsqnih7z7m6ds6sj7lqgpi' },
 };
 
 // Подготовка карточек авторов

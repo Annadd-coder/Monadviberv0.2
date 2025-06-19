@@ -1,56 +1,30 @@
-specVersion: 1.3.0
-indexerHints:
-  prune: auto
+specVersion: 0.0.4
 schema:
   file: ./schema.graphql
+
 dataSources:
   - kind: ethereum
-    name: mvb
+    name: MVB
     network: monad-testnet
     source:
       address: "0xcD9e480b7A66128eDf5f935810681CbD6E8461f0"
-      abi: mvb
-      startBlock: 0
+      abi: MVB
+      startBlock: 7153700
+
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.9
+      apiVersion: 0.0.7
       language: wasm/assemblyscript
+
       entities:
-        - Approval
-        - ApprovalForAll
-        - AuctionBid
-        - AuctionCancelled
-        - AuctionCreated
-        - AuctionEnded
-        - NFTMinted
-        - RoleAdminChanged
-        - RoleGranted
-        - RoleRevoked
-        - Transfer
+        - Collection
+
       abis:
-        - name: mvb
-          file: ./abis/mvb.json
+        - name: MVB
+          file: ./abis/MVB.json
+
       eventHandlers:
-        - event: Approval(indexed address,indexed address,indexed uint256)
-          handler: handleApproval
-        - event: ApprovalForAll(indexed address,indexed address,bool)
-          handler: handleApprovalForAll
-        - event: AuctionBid(indexed uint256,indexed address,uint256)
-          handler: handleAuctionBid
-        - event: AuctionCancelled(indexed uint256)
-          handler: handleAuctionCancelled
-        - event: AuctionCreated(indexed uint256,indexed address,uint256,uint256)
-          handler: handleAuctionCreated
-        - event: AuctionEnded(indexed uint256,indexed address,uint256)
-          handler: handleAuctionEnded
         - event: NFTMinted(indexed uint256,indexed address,indexed uint256)
           handler: handleNFTMinted
-        - event: RoleAdminChanged(indexed bytes32,indexed bytes32,indexed bytes32)
-          handler: handleRoleAdminChanged
-        - event: RoleGranted(indexed bytes32,indexed address,indexed address)
-          handler: handleRoleGranted
-        - event: RoleRevoked(indexed bytes32,indexed address,indexed address)
-          handler: handleRoleRevoked
-        - event: Transfer(indexed address,indexed address,indexed uint256)
-          handler: handleTransfer
+
       file: ./src/mvb.ts
