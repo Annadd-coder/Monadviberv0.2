@@ -1,29 +1,56 @@
 {
+  "$schema": "https://json.schemastore.org/tsconfig",
   "compilerOptions": {
-    "target": "ES2017",
-    "lib": [
-      "dom",
-      "dom.iterable",
-      "esnext"
-    ],
-    "allowJs": true,
-    "skipLibCheck": true,
-    "strict": false,
-    "noEmit": true,
-    "incremental": true,
+    /* ---------- базовые --------- */
+    "target": "ES2022",
+    "lib": ["dom", "dom.iterable", "esnext"],
+
+    /* ---------- поведение файлов --------- */
+    "allowJs": true,            // подключаем .js / .jsx
+    "jsx": "preserve",          // Next перехватит JSX сам
+    "resolveJsonModule": true,  // можно импортировать .json
+
+    /* ---------- тип-чек --------- */
+    "strict": false,            // ← включите true, если нужен строгий режим
+    "skipLibCheck": true,       // пропускаем d.ts node_modules
+    "noEmit": true,             // Next компилит сам
+
+    /* ---------- модули --------- */
     "module": "esnext",
-    "esModuleInterop": true,
     "moduleResolution": "node",
-    "resolveJsonModule": true,
+    "esModuleInterop": true,
     "isolatedModules": true,
-    "jsx": "preserve"
+
+    /* ---------- ускорение --------- */
+    "incremental": true,
+
+    /* ---------- пути/алиасы (необязательно) --------- */
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"],
+      "~/*": ["*"]
+    },
+
+    /* ---------- типы окружения --------- */
+    "types": ["node"]           // добавьте "jest", если используете тесты
   },
+
+  /* ---------- в каких файлах искать типы --------- */
   "include": [
     "next-env.d.ts",
     "**/*.ts",
-    "**/*.tsx"
+    "**/*.tsx",
+    "**/*.js",
+    "**/*.jsx"
   ],
+
+  /* ---------- что НЕ проверяем --------- */
   "exclude": [
-    "node_modules"
+    "node_modules",
+    ".next",
+    "dist",
+    "out",
+    "0x*/**",          // subgraph, сгенерированный thegraph
+    "subgraph/**"
   ]
 }

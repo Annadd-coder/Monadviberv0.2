@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@apollo/client": "^3.13.8",
+    "@graphprotocol/graph-ts": "^0.38.1",
     "@react-three/drei": "^10.0.7",
     "@react-three/fiber": "^9.1.2",
     "@supabase/supabase-js": "^2.49.4",
@@ -32,6 +33,7 @@
   "devDependencies": {
     "@types/react": "19.1.4",
     "@types/three": "^0.177.0",
+    "eslint": "^9.29.0",
     "typescript": "5.8.3"
   }
 }
