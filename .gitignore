@@ -59,3 +59,4 @@ node_modules
 ignition/deployments/chain-31337
 
 .env
+package-lock.json # чтобы больше не попадал
