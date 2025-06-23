@@ -3,8 +3,11 @@ import Head from 'next/head';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 
-const AuthorPlanet = dynamic(() => import('../components/AuthorPlanet'), { ssr: false });
-
+/* ───────── 1. трёхмерная сцена (только в клиенте) ───────── */
+const AuthorPlanet = dynamic(
+  () => import('../components/AuthorPlanet'),
+  { ssr: false, loading: () => <p style={{textAlign:'center'}}>Loading planet…</p> }
+);
 /* ——— авторы ——— */
 const AUTHORS = {
   twistzz:        { cid: 'bafybeif2hdabepr5je2vblwi6iivwhzne3rwmql7qhwgcn3cwhpgqqzyv4' },
@@ -24,7 +27,7 @@ const AUTHORS = {
 };
 const AUTHOR_IDS = Object.keys(AUTHORS);
 
-/* ——— карточки функций ——— */
+/* ───────── 3. карточки функций ───────── */
 const CARDS = [
   {
     title: 'Author Collections',
@@ -49,13 +52,13 @@ const CARDS = [
   },
 ];
 
-/* ——— компонент футера ——— */
+/* ───────── 4. футер ───────── */
 function Footer() {
   return (
-    <footer style={{ background: '#FFFFFF', borderTop: '2px solid #D8CCFF', padding: '60px 5vw' }}>
-      <div style={{ textAlign: 'center', fontSize: 14, color: '#4F4F5E' }}>
-        Created by <strong style={{ color: '#593CCB' }}>Annad</strong> for the Monad community ·{' '}
-        <a href="mailto:annaigorevna1204@gmail.com" style={{ color: '#593CCB', textDecoration: 'none' }}>
+    <footer style={{ background:'#fff', borderTop:'2px solid #D8CCFF', padding:'60px 5vw' }}>
+      <div style={{ textAlign:'center', fontSize:14, color:'#4F4F5E' }}>
+        Created by <strong style={{ color:'#593CCB' }}>Annad</strong> for the Monad community ·{' '}
+        <a href="mailto:annaigorevna1204@gmail.com" style={{ color:'#593CCB', textDecoration:'none' }}>
           annaigorevna1204@gmail.com
         </a>
       </div>
@@ -63,122 +66,81 @@ function Footer() {
   );
 }
 
+/* ───────── 5. страница ───────── */
 export default function Home() {
   return (
     <>
       <Head>
         <title>MonadViber • Where Art Meets Utility</title>
         <meta name="viewport" content="width=device-width,initial-scale=1" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap"
-          rel="stylesheet"
-        />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet" />
       </Head>
 
-      {/* ——— глобальный фон ——— */}
-      <div style={{ background: '#EFEAFF', padding: '90px 0 160px' }}>
+      {/* глобальный фон */}
+      <div style={{ background:'#EFEAFF', padding:'90px 0 160px' }}>
         <section
           style={{
-            maxWidth: 1280,
-            margin: '0 auto',
-            background: '#F9F7FF',
-            borderRadius: 32,
-            border: '2px solid #D8CCFF',
-            boxShadow: '0 14px 60px rgba(107,79,200,0.12)',
-            padding: '0 5vw 120px',
-            overflow: 'hidden',
+            maxWidth:1280, margin:'0 auto', background:'#F9F7FF', borderRadius:32,
+            border:'2px solid #D8CCFF', boxShadow:'0 14px 60px rgba(107,79,200,0.12)',
+            padding:'0 5vw 120px', overflow:'hidden',
           }}
         >
-          {/* ——— HERO с планетой ——— */}
+          {/* HERO */}
           <header
             style={{
-              position: 'relative',
-              padding: '80px 0 140px',
-              textAlign: 'center',
-              background: 'radial-gradient(ellipse at top,#FFFFFF 0%,#F4EFFF 100%)',
-              borderBottom: '2px solid #C9BAFF',
-              marginBottom: 80,
+              position:'relative', padding:'80px 0 140px', textAlign:'center',
+              background:'radial-gradient(ellipse at top,#FFFFFF 0%,#F4EFFF 100%)',
+              borderBottom:'2px solid #C9BAFF', marginBottom:80,
             }}
           >
-            <div style={{ maxWidth: 900, margin: '0 auto' }}>
+            <div style={{ maxWidth:900, margin:'0 auto' }}>
               <AuthorPlanet authors={AUTHOR_IDS} />
             </div>
 
-            {/* ——— «дорогой» заголовок ——— */}
             <h1 className="hero-title">
               <span className="line">More&nbsp;than <strong>NFTs</strong></span>
               <span className="line brand"> the MonadViber</span>
             </h1>
 
-            {/* локальный CSS HERO - title */}
             <style jsx>{`
               .hero-title {
-                margin-top: 46px;
-                line-height: 1.15;
-                text-align: center;
-                font-family: 'Poppins', sans-serif;
+                margin-top:46px; line-height:1.15; text-align:center; font-family:'Poppins',sans-serif;
               }
               .hero-title .line {
-                display: block;
-                font-weight: 700;
-                font-size: clamp(2.6rem, 6vw, 4.2rem);
-                background: linear-gradient(90deg, #6B4FC8 0%, #9877FF 100%);
-                -webkit-background-clip: text;
-                background-clip: text;
-                color: transparent;
-                text-shadow:
-                  0 2px 6px rgba(107, 79, 200, 0.25),
-                  0 0 1px rgba(0, 0, 0, 0.2);
+                display:block; font-weight:700;
+                font-size:clamp(2.6rem,6vw,4.2rem);
+                background:linear-gradient(90deg,#6B4FC8 0%,#9877FF 100%);
+                -webkit-background-clip:text; background-clip:text; color:transparent;
+                text-shadow:0 2px 6px rgba(107,79,200,.25), 0 0 1px rgba(0,0,0,.2);
               }
-              .hero-title strong {
-                font-size: 1.08em;
-              }
-              .hero-title .brand {
-                font-style: italic;
-                letter-spacing: 0.5px;
-              }
+              .hero-title strong { font-size:1.08em; }
+              .hero-title .brand { font-style:italic; letter-spacing:.5px; }
             `}</style>
           </header>
 
-          {/* ——— Feature Cards ——— */}
-          <div
-            style={{
-              display: 'grid',
-              gap: 50,
-              gridTemplateColumns: 'repeat(auto-fit,minmax(300px,1fr))',
-            }}
-          >
-            {CARDS.map(({ title, img, text, href, cta }) => (
+          {/* карточки */}
+          <div style={{ display:'grid', gap:50, gridTemplateColumns:'repeat(auto-fit,minmax(300px,1fr))' }}>
+            {CARDS.map(({ title,img,text,href,cta }) => (
               <article
                 key={title}
                 style={{
-                  position: 'relative',
-                  background: 'radial-gradient(ellipse at top,#FFFFFF 0%,#F4EFFF 100%)',
-                  border: '2px solid #D8CCFF',
-                  borderRadius: 24,
-                  padding: '80px 32px 110px',
-                  textAlign: 'center',
-                  boxShadow: '0 8px 40px rgba(107,79,200,0.08)',
+                  position:'relative',
+                  background:'radial-gradient(ellipse at top,#FFFFFF 0%,#F4EFFF 100%)',
+                  border:'2px solid #D8CCFF', borderRadius:24,
+                  padding:'80px 32px 110px', textAlign:'center',
+                  boxShadow:'0 8px 40px rgba(107,79,200,0.08)',
                 }}
               >
-                <img src={img} alt="" style={{ width: 120, marginBottom: 30 }} />
-                <h3 style={{ fontSize: 22, fontWeight: 600, color: '#593CCB', marginBottom: 16 }}>{title}</h3>
-                <p style={{ fontSize: 15, lineHeight: 1.55, color: '#4F4F5E', minHeight: 70 }}>{text}</p>
+                <img src={img} alt="" style={{ width:120, marginBottom:30 }} />
+                <h3 style={{ fontSize:22, fontWeight:600, color:'#593CCB', marginBottom:16 }}>{title}</h3>
+                <p style={{ fontSize:15, lineHeight:1.55, color:'#4F4F5E', minHeight:70 }}>{text}</p>
                 <Link href={href} legacyBehavior>
                   <a
                     style={{
-                      position: 'absolute',
-                      left: '50%',
-                      bottom: -22,
-                      transform: 'translateX(-50%)',
-                      padding: '14px 46px',
-                      borderRadius: 46,
-                      fontWeight: 600,
-                      fontSize: 14,
-                      background: '#6B4FC8',
-                      color: '#FFFFFF',
-                      textDecoration: 'none',
+                      position:'absolute', left:'50%', bottom:-22, transform:'translateX(-50%)',
+                      padding:'14px 46px', borderRadius:46, fontWeight:600, fontSize:14,
+                      background:'#6B4FC8', color:'#FFF', textDecoration:'none',
                     }}
                   >
                     {cta}
@@ -190,7 +152,6 @@ export default function Home() {
         </section>
       </div>
 
-      {/* ——— футер ——— */}
       <Footer />
     </>
   );
