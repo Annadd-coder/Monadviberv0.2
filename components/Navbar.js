@@ -2,30 +2,31 @@
 import { useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { ethers } from 'ethers';
 import { FiUser, FiLogOut } from 'react-icons/fi';
-import { WalletContext } from '../pages/_app';
 import Link from 'next/link';
+import { WalletContext } from '../pages/_app';
 
 export default function Navbar() {
+  /* ──────────────── state / refs ──────────────── */
   const { address, setAddress } = useContext(WalletContext);
   const [isConnecting, setIsConnecting] = useState(false);
   const providerRef = useRef(null);
 
-  /* ───────────────────────────── 1. disconnectWallet (первым!) ───────────────────────────── */
+  /* ──────────────── 1.  disconnectWallet ──────────────── */
   const disconnectWallet = useCallback(() => {
     setAddress(null);
-    if (typeof window !== 'undefined') {
+    if (typeof window !== 'undefined')
       window.localStorage.removeItem('monadWallet');
-    }
-  }, [setAddress]);
+  }, [setAddress]);                           // ← зависимость указана
 
-  /* ───────────────────────────── 2. Provider + события ───────────────────────────── */
+  /* ──────────────── 2. подписка на events MetaMask ──────────────── */
   useEffect(() => {
     if (typeof window === 'undefined' || !window.ethereum) return;
+
     providerRef.current = new ethers.BrowserProvider(window.ethereum);
 
     const handleAccountsChanged = accounts => {
       if (accounts.length === 0) {
-        disconnectWallet();
+        disconnectWallet();                  // корректно, т.к. в deps
       } else {
         setAddress(accounts[0]);
         window.localStorage.setItem('monadWallet', accounts[0]);
@@ -34,17 +35,17 @@ export default function Navbar() {
     const handleChainChanged = () => window.location.reload();
 
     window.ethereum.on('accountsChanged', handleAccountsChanged);
-    window.ethereum.on('chainChanged', handleChainChanged);
+    window.ethereum.on('chainChanged',   handleChainChanged);
 
     return () => {
       window.ethereum?.removeListener('accountsChanged', handleAccountsChanged);
-      window.ethereum?.removeListener('chainChanged', handleChainChanged);
+      window.ethereum?.removeListener('chainChanged',    handleChainChanged);
     };
-  }, [setAddress, disconnectWallet]);          // ← добавили disconnectWallet
+  }, [setAddress, disconnectWallet]);        // ✅ обе зависимости заданы
 
-  /* ───────────────────────────── 3. Восстановление сессии ───────────────────────────── */
+  /* ──────────────── 3. restoreSession на mount ──────────────── */
   useEffect(() => {
-    const restoreSession = async () => {
+    const restore = async () => {
       if (typeof window === 'undefined' || !window.ethereum) return;
 
       const cached = window.localStorage.getItem('monadWallet');
@@ -57,7 +58,7 @@ export default function Navbar() {
         const provider =
           providerRef.current ?? new ethers.BrowserProvider(window.ethereum);
         const accounts = await provider.send('eth_accounts', []);
-        if (accounts.length > 0) {
+        if (accounts.length) {
           setAddress(accounts[0]);
           window.localStorage.setItem('monadWallet', accounts[0]);
         }
@@ -65,27 +66,26 @@ export default function Navbar() {
         console.error(err);
       }
     };
-
-    restoreSession();
+    restore();
   }, [setAddress]);
 
-  /* ───────────────────────────── 4. Подключение кошелька ───────────────────────────── */
+  /* ──────────────── 4. connectWallet ──────────────── */
   const connectWallet = useCallback(async () => {
-    if (!window.ethereum) return alert('MetaMask not found');
-    if (isConnecting) return;
+    if (!window.ethereum)   return alert('MetaMask not found');
+    if (isConnecting)       return;
     setIsConnecting(true);
 
     try {
       const provider =
         providerRef.current ?? new ethers.BrowserProvider(window.ethereum);
       const accounts = await provider.send('eth_requestAccounts', []);
-      if (accounts.length > 0) {
+      if (accounts.length) {
         setAddress(accounts[0]);
         window.localStorage.setItem('monadWallet', accounts[0]);
       }
     } catch (err) {
       if (err?.code === -32002) {
-        alert('Запрос уже открыт в MetaMask, подтвердите его');
+        alert('Запрос уже открыт в MetaMask — подтвердите его');
       } else if (err?.code !== 4001) {
         console.error(err);
         alert(err.message || 'Connection error');
@@ -95,7 +95,7 @@ export default function Navbar() {
     }
   }, [isConnecting, setAddress]);
 
-  /* ───────────────────────────── 5. Рендер ───────────────────────────── */
+  /* ──────────────── 5. UI ──────────────── */
   return (
     <nav className="navbar">
       <Link href="/" legacyBehavior><a className="brand">MonadViber</a></Link>
@@ -111,14 +111,18 @@ export default function Navbar() {
           <div className="walletInfo">
             <div className="address">
               <FiUser />
-              {`${address.slice(0, 6)}...${address.slice(-4)}`}
+              {`${address.slice(0,6)}...${address.slice(-4)}`}
             </div>
-            <button onClick={disconnectWallet} className="btn disconnect">
+            <button className="btn disconnect" onClick={disconnectWallet}>
               <FiLogOut />
             </button>
           </div>
         ) : (
-          <button onClick={connectWallet} className="btn" disabled={isConnecting}>
+          <button
+            className="btn"
+            onClick={connectWallet}
+            disabled={isConnecting}
+          >
             {isConnecting ? 'Connecting…' : 'Connect Wallet'}
           </button>
         )}
