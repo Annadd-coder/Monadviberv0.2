@@ -10,14 +10,20 @@ export default function Navbar() {
   const [isConnecting, setIsConnecting] = useState(false);
   const providerRef = useRef(null);
 
-  /* ───────────────────────────────────────────────────────────────────── */
-  /* 1. Provider + события аккаунтов/цепочки */
-  /* ───────────────────────────────────────────────────────────────────── */
+  /* ───────────────────────────── 1. disconnectWallet (первым!) ───────────────────────────── */
+  const disconnectWallet = useCallback(() => {
+    setAddress(null);
+    if (typeof window !== 'undefined') {
+      window.localStorage.removeItem('monadWallet');
+    }
+  }, [setAddress]);
+
+  /* ───────────────────────────── 2. Provider + события ───────────────────────────── */
   useEffect(() => {
     if (typeof window === 'undefined' || !window.ethereum) return;
     providerRef.current = new ethers.BrowserProvider(window.ethereum);
 
-    const handleAccountsChanged = (accounts) => {
+    const handleAccountsChanged = accounts => {
       if (accounts.length === 0) {
         disconnectWallet();
       } else {
@@ -29,25 +35,27 @@ export default function Navbar() {
 
     window.ethereum.on('accountsChanged', handleAccountsChanged);
     window.ethereum.on('chainChanged', handleChainChanged);
+
     return () => {
       window.ethereum?.removeListener('accountsChanged', handleAccountsChanged);
       window.ethereum?.removeListener('chainChanged', handleChainChanged);
     };
-  }, [setAddress]);
+  }, [setAddress, disconnectWallet]);          // ← добавили disconnectWallet
 
-  /* ───────────────────────────────────────────────────────────────────── */
-  /* 2. Восстановление сессии */
-  /* ───────────────────────────────────────────────────────────────────── */
+  /* ───────────────────────────── 3. Восстановление сессии ───────────────────────────── */
   useEffect(() => {
     const restoreSession = async () => {
       if (typeof window === 'undefined' || !window.ethereum) return;
+
       const cached = window.localStorage.getItem('monadWallet');
       if (cached) {
         setAddress(cached);
         return;
       }
+
       try {
-        const provider = providerRef.current ?? new ethers.BrowserProvider(window.ethereum);
+        const provider =
+          providerRef.current ?? new ethers.BrowserProvider(window.ethereum);
         const accounts = await provider.send('eth_accounts', []);
         if (accounts.length > 0) {
           setAddress(accounts[0]);
@@ -57,18 +65,19 @@ export default function Navbar() {
         console.error(err);
       }
     };
+
     restoreSession();
   }, [setAddress]);
 
-  /* ───────────────────────────────────────────────────────────────────── */
-  /* 3. Подключение кошелька */
-  /* ───────────────────────────────────────────────────────────────────── */
+  /* ───────────────────────────── 4. Подключение кошелька ───────────────────────────── */
   const connectWallet = useCallback(async () => {
     if (!window.ethereum) return alert('MetaMask not found');
     if (isConnecting) return;
     setIsConnecting(true);
+
     try {
-      const provider = providerRef.current ?? new ethers.BrowserProvider(window.ethereum);
+      const provider =
+        providerRef.current ?? new ethers.BrowserProvider(window.ethereum);
       const accounts = await provider.send('eth_requestAccounts', []);
       if (accounts.length > 0) {
         setAddress(accounts[0]);
@@ -86,39 +95,17 @@ export default function Navbar() {
     }
   }, [isConnecting, setAddress]);
 
-  /* ───────────────────────────────────────────────────────────────────── */
-  /* 4. Отключение кошелька */
-  /* ───────────────────────────────────────────────────────────────────── */
-  const disconnectWallet = useCallback(() => {
-    setAddress(null);
-    window.localStorage.removeItem('monadWallet');
-  }, [setAddress]);
-
-  /* ───────────────────────────────────────────────────────────────────── */
-  /* 5. Рендер */
-  /* ───────────────────────────────────────────────────────────────────── */
+  /* ───────────────────────────── 5. Рендер ───────────────────────────── */
   return (
     <nav className="navbar">
-      <Link href="/" legacyBehavior>
-        <a className="brand">MonadViber</a>
-      </Link>
+      <Link href="/" legacyBehavior><a className="brand">MonadViber</a></Link>
 
       <div className="links">
-        <Link href="/about" legacyBehavior>
-          <a className="navButton">About</a>
-        </Link>
-        <Link href="/collections" legacyBehavior>
-          <a className="navButton">Collections</a>
-        </Link>
-        <Link href="/feed" legacyBehavior>
-          <a className="navButton">Feed</a>
-        </Link>
-        <Link href="/moaps" legacyBehavior>
-          <a className="navButton">Moap</a>
-        </Link>
-        <Link href="/Profile" legacyBehavior>
-          <a className="navButton">Profile</a>
-        </Link>
+        <Link href="/about"       legacyBehavior><a className="navButton">About</a></Link>
+        <Link href="/collections" legacyBehavior><a className="navButton">Collections</a></Link>
+        <Link href="/feed"        legacyBehavior><a className="navButton">Feed</a></Link>
+        <Link href="/moaps"       legacyBehavior><a className="navButton">Moap</a></Link>
+        <Link href="/Profile"     legacyBehavior><a className="navButton">Profile</a></Link>
 
         {address ? (
           <div className="walletInfo">
@@ -132,7 +119,7 @@ export default function Navbar() {
           </div>
         ) : (
           <button onClick={connectWallet} className="btn" disabled={isConnecting}>
-            {isConnecting ? 'Connecting...' : 'Connect Wallet'}
+            {isConnecting ? 'Connecting…' : 'Connect Wallet'}
           </button>
         )}
       </div>
