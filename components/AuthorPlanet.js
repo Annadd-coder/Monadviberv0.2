@@ -4,16 +4,13 @@ import * as THREE from 'three';
 import { Canvas, useFrame, useLoader } from '@react-three/fiber';
 import { OrbitControls, Billboard, Stars } from '@react-three/drei';
 
-/* ------ кастом-хук: загружаем массив аватаров один раз ------ */
-function useAvatarTextures(authorIds) {
-  const urls = useMemo(
-    () => authorIds.map(id => `/collections/${id}/avatar.png`),
-    [authorIds]
-  );
-  return useLoader(THREE.TextureLoader, urls);           // вызов на верхнем уровне!
+/* ───────── кастом-хук: загружаем аватары один раз ───────── */
+function useAvatarTextures(ids) {
+  const urls = useMemo(() => ids.map(id => `/collections/${id}/avatar.png`), [ids]);
+  return useLoader(THREE.TextureLoader, urls);           // верхний уровень ✔
 }
 
-/* ---------------- кольцо аватаров ---------------- */
+/* ───────── кольцо аватаров ───────── */
 function AvatarRing({ authors, radius = 6, tilt = 0.5, speed = 0.2, y = 0 }) {
   const group = useRef();
   useFrame(({ clock }) => {
@@ -41,26 +38,36 @@ function AvatarRing({ authors, radius = 6, tilt = 0.5, speed = 0.2, y = 0 }) {
   );
 }
 
-/* ---------------- сама «планета» ---------------- */
+/* ───────── сама «планета» ───────── */
 export default function AuthorPlanet({ authors }) {
   const coreTexture = useLoader(
     THREE.TextureLoader,
     '/branding/core-texture.png'
-  );                                                    // верхний уровень OK
+  ); // верхний уровень ✔
 
   return (
-    <Canvas style={{ width: '100%', height: 500 }} camera={{ position: [0, 3, 12], fov: 50 }}>
+    <Canvas
+      style={{ width: '100%', height: 500 }}
+      camera={{ position: [0, 3, 12], fov: 50 }}
+      /* anti-context-lost tweaks */
+      dpr={[1, 1.5]}
+      powerPreference="high-performance"
+      gl={{ preserveDrawingBuffer: true }}
+      onContextLost={e => e.preventDefault()}
+    >
       <ambientLight intensity={0.6} />
       <directionalLight position={[5, 5, 5]} intensity={0.5} />
       <Stars radius={60} depth={40} count={4000} factor={4} fade />
 
+      {/* ядро */}
       <mesh>
         <sphereGeometry args={[3, 64, 64]} />
         <meshStandardMaterial map={coreTexture} roughness={1} metalness={0} />
       </mesh>
 
-      <AvatarRing authors={authors} radius={6} tilt={0.45} speed={0.2} />
-      <AvatarRing authors={authors} radius={8} tilt={-0.3} speed={0.14} y={-0.5} />
+      {/* два кольца с аватарами */}
+      <AvatarRing authors={authors} radius={6}  tilt={ 0.45} speed={0.20} />
+      <AvatarRing authors={authors} radius={8}  tilt={-0.30} speed={0.14} y={-0.5} />
 
       <OrbitControls enablePan={false} />
     </Canvas>
